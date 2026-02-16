@@ -23,7 +23,19 @@ MIT (`LICENSE`)
 ## Deployment
 
 - Desktop build artifacts (macOS/Windows/Linux): GitHub Actions `Desktop Release` workflow (`.github/workflows/desktop-release.yml`).
-- Promo landing page: GitHub Pages via `Promo Web Pages` workflow (`.github/workflows/promo-web-pages.yml`).
+- Promo landing page: Cloudflare Pages via `Promo Web Cloudflare Pages` workflow (`.github/workflows/promo-web-pages.yml`).
 - Promo web backend is optional. For pure landing pages, static hosting is enough. Add Firebase only if you need dynamic features (auth, database, server logic).
+
+### Cloudflare Pages Setup
+
+Set these repository settings before running the workflow:
+
+- Secrets:
+  - `CLOUDFLARE_API_TOKEN` (Pages deploy permission)
+  - `CLOUDFLARE_ACCOUNT_ID`
+- Variable:
+  - `CLOUDFLARE_PAGES_PROJECT` (Cloudflare Pages project name)
+
+Detailed guide: `docs/cloudflare-pages-setup.md`
 
 Design/spec docs live in `fluttrim_planning_md_set/`.
