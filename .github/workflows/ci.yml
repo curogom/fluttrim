@@ -40,6 +40,21 @@ jobs:
         working-directory: packages/core
         run: dart test
 
+  core-pub-dry-run:
+    needs:
+      - public-scope-guard
+      - core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Core publish dry-run
+        working-directory: packages/core
+        run: dart pub publish --dry-run
+
   cli:
     needs: public-scope-guard
     runs-on: ubuntu-latest
