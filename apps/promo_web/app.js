@@ -33,6 +33,7 @@ const translations = {
       "Tell us your OS + team size and we will prioritize your onboarding slot.",
     download_button: "Request Invite",
     footer_tagline: "Flutter-focused cache inspector and space trimmer.",
+    footer_owner_label: "Created by",
   },
   ko: {
     hero_eyebrow: "감(感)으로 정리하지 않는 Flutter 캐시 관리.",
@@ -67,6 +68,7 @@ const translations = {
     download_body: "사용 OS와 팀 규모를 남겨주시면 온보딩 우선순위를 반영합니다.",
     download_button: "초대 요청",
     footer_tagline: "Flutter 전용 캐시 인스펙터 및 공간 정리 도구",
+    footer_owner_label: "만든 사람",
   },
 };
 

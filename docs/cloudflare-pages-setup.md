@@ -33,22 +33,8 @@ Cloudflare 대시보드:
 
 ## 3) GitHub Actions 워크플로와의 관계
 
-저장소에는 선택적으로 사용할 수 있는 워크플로가 있습니다.
-
-- 파일: `.github/workflows/promo-web-pages.yml`
-- 현재: 수동 실행(`workflow_dispatch`) + 토큰/변수 설정 시에만 실제 배포
-
-즉, 토큰을 설정하지 않으면 이 워크플로는 안내 메시지만 출력하고 배포를 수행하지 않습니다.
-
-## 4) 선택 옵션: GitHub Actions로 배포하고 싶을 때만
-
-아래 값은 **선택 사항**입니다. 토큰 없는 운영을 유지하려면 설정하지 않아도 됩니다.
-
-- Secrets:
-  - `CLOUDFLARE_API_TOKEN`
-  - `CLOUDFLARE_ACCOUNT_ID`
-- Variable:
-  - `CLOUDFLARE_PAGES_PROJECT`
+이 저장소는 Promo 웹 배포를 Cloudflare 대시보드 Git 연동으로만 운영합니다.
+즉, GitHub Actions 기반 Cloudflare 배포 워크플로와 토큰/계정 ID 설정을 사용하지 않습니다.
 
 ## 문제 해결
 
