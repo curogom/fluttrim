@@ -1,75 +1,60 @@
-# Cloudflare Pages 설정 가이드 (Promo Web)
+# Cloudflare Pages 설정 가이드 (토큰 없이 기본 운영)
 
-이 문서는 `apps/promo_web`를 GitHub Actions 워크플로로 배포하는 절차를 설명합니다.
+이 문서는 `apps/promo_web`를 **Cloudflare 대시보드 Git 연동**으로 배포하는 기준을 설명합니다.
 
-- 워크플로 파일: `.github/workflows/promo-web-pages.yml`
+기본 원칙:
+
+- 기본 배포는 Cloudflare Pages가 GitHub를 직접 빌드하도록 구성
+- 이 방식은 GitHub 저장소에 Cloudflare API 토큰을 저장하지 않아도 됨
 
 ## 1) Cloudflare Pages 프로젝트 생성
 
-Cloudflare 대시보드에서:
+Cloudflare 대시보드:
 
 1. **Workers & Pages** 이동
-2. **Create application** -> **Pages** -> **Direct Upload** 선택
-3. 프로젝트 이름 생성 (예: `fluttrim-site`)
-4. 생성만 완료하면 되고, 초기 수동 업로드는 선택 사항
+2. **Create application** -> **Pages** -> GitHub 저장소 연결
+3. 저장소 `curogom/fluttrim` 선택
+4. 다음 값으로 빌드 설정
 
-이 프로젝트 이름을 GitHub 변수 `CLOUDFLARE_PAGES_PROJECT`에 사용합니다.
+- 프로젝트 이름: `fluttrim` (원하는 이름 가능)
+- 프로덕션 브랜치: `main`
+- 프레임워크 사전 설정: `없음`
+- 빌드 명령: 비워둠 (필요 시 `echo "no build"`)
+- 빌드 출력 디렉터리: `apps/promo_web`
+- 루트 디렉터리(고급): `/` (기본값이면 비워둬도 됨)
+- 환경 변수: 없음
 
-## 2) API 토큰 생성
+5. **저장 및 배포**
 
-Cloudflare 대시보드에서:
+## 2) 배포 확인
 
-1. **My Profile** -> **API Tokens** -> **Create Token**
-2. 템플릿 **Edit Cloudflare Workers**(또는 커스텀 토큰) 선택
-3. 최소 필요 권한
-   - Account: `Cloudflare Pages:Edit`
-4. Pages 프로젝트가 속한 계정 범위로 제한
-5. 토큰 생성 후 값 복사
+- 초기 배포 URL 예시: `https://fluttrim.pages.dev`
+- `main` 브랜치에 `apps/promo_web/**` 변경 푸시 시 Cloudflare에서 자동 재배포
 
-## 3) Account ID 확인
+## 3) GitHub Actions 워크플로와의 관계
 
-- Cloudflare 계정 홈에서 **Account ID** 복사
+저장소에는 선택적으로 사용할 수 있는 워크플로가 있습니다.
 
-## 4) GitHub 저장소 시크릿/변수 설정
+- 파일: `.github/workflows/promo-web-pages.yml`
+- 현재: 수동 실행(`workflow_dispatch`) + 토큰/변수 설정 시에만 실제 배포
 
-저장소: `curogom/fluttrim`
+즉, 토큰을 설정하지 않으면 이 워크플로는 안내 메시지만 출력하고 배포를 수행하지 않습니다.
 
-**Settings -> Secrets and variables -> Actions**에서 설정:
+## 4) 선택 옵션: GitHub Actions로 배포하고 싶을 때만
 
-Secrets:
+아래 값은 **선택 사항**입니다. 토큰 없는 운영을 유지하려면 설정하지 않아도 됩니다.
 
-- `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
-
-Variable:
-
-- `CLOUDFLARE_PAGES_PROJECT`
-
-## 5) 배포 실행
-
-### 방법 A: 수동 실행
-
-- GitHub -> **Actions** -> **Promo Web Cloudflare Pages** -> **Run workflow**
-
-### 방법 B: 자동 실행
-
-아래 경로 변경이 `main`에 푸시되면 자동 배포됩니다.
-
-- `apps/promo_web/**`
-- `.github/workflows/promo-web-pages.yml`
-
-## 6) 검증
-
-- 워크플로 로그에서 deployment URL 확인
-- URL 접속 후 EN 기본/KO 토글 동작 확인
-- 필요 시 Cloudflare Pages의 **Custom domains**에서 커스텀 도메인 연결
+- Secrets:
+  - `CLOUDFLARE_API_TOKEN`
+  - `CLOUDFLARE_ACCOUNT_ID`
+- Variable:
+  - `CLOUDFLARE_PAGES_PROJECT`
 
 ## 문제 해결
 
-- `Missing repository variable CLOUDFLARE_PAGES_PROJECT`
-  - 저장소 변수 이름을 정확히 설정
-- 인증 오류
-  - 토큰 권한/계정 범위 점검
-  - `CLOUDFLARE_ACCOUNT_ID`와 실제 Pages 프로젝트 계정 일치 여부 점검
-- 배포 성공 후 구버전 노출
-  - 강력 새로고침 및 CDN 전파 시간 확인
+- 배포가 안 뜨는 경우:
+  - Cloudflare Pages 프로젝트의 Git 연결 저장소/브랜치가 `curogom/fluttrim` / `main`인지 확인
+  - 빌드 출력 디렉터리가 `apps/promo_web`인지 확인
+- 구버전이 보이는 경우:
+  - 강력 새로고침
+  - Cloudflare 배포 로그에서 최신 커밋 반영 여부 확인

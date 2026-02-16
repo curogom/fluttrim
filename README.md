@@ -26,18 +26,19 @@ MIT (`LICENSE`)
 
 - 데스크톱 아티팩트(macOS/Windows/Linux): GitHub Actions `Desktop Release`
   - `.github/workflows/desktop-release.yml`
-- Promo 웹(Cloudflare Pages): GitHub Actions `Promo Web Cloudflare Pages`
-  - `.github/workflows/promo-web-pages.yml`
+- Promo 웹(Cloudflare Pages): **Cloudflare 대시보드 Git 연동 배포(기본, 토큰 불필요)**
+  - Cloudflare Pages 프로젝트에서 `curogom/fluttrim` 저장소를 연결하고 `apps/promo_web`를 정적 출력 디렉터리로 사용
 
 ## Cloudflare Pages 설정
 
-워크플로 실행 전 저장소 설정이 필요합니다.
+- 기본 방식(권장): Cloudflare 대시보드 Git 연동 사용, GitHub Secrets 불필요
+- 선택 방식: GitHub Actions 워크플로로 직접 배포(토큰 필요)
+  - `.github/workflows/promo-web-pages.yml`
 
-- Secrets
-  - `CLOUDFLARE_API_TOKEN`
-  - `CLOUDFLARE_ACCOUNT_ID`
-- Variable
-  - `CLOUDFLARE_PAGES_PROJECT`
+워크플로(선택 방식) 사용 시에만 아래를 설정합니다.
+
+- Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+- Variable: `CLOUDFLARE_PAGES_PROJECT`
 
 상세 가이드: `docs/cloudflare-pages-setup.md`
 
