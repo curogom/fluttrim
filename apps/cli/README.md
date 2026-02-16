@@ -1,21 +1,21 @@
 # fluttrim_cli
 
-Thin CLI wrapper around `fluttrim_core`.
+`fluttrim_core`를 호출하는 얇은 CLI 래퍼입니다.
 
-## Usage
+## 사용법
 
 ```bash
 dart run bin/fluttrim.dart --help
 ```
 
-Commands:
+명령어:
 
-- `scan` : discover Flutter projects and compute cache sizes
-- `plan` : create cleanup plan (preview only)
-- `apply` : execute cleanup plan
-- `doctor` : print OS/tool/cache-path diagnostics
+- `scan` : Flutter 프로젝트 탐지 및 캐시 용량 계산
+- `plan` : 정리 계획 생성(미리보기)
+- `apply` : 정리 계획 실행
+- `doctor` : OS/도구/캐시 경로 진단 출력
 
-Examples:
+예시:
 
 ```bash
 dart run bin/fluttrim.dart scan --root ~/Projects --profile safe

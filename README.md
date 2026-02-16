@@ -1,41 +1,47 @@
 # fluttrim
 
-Cross-platform (macOS/Windows/Linux) Flutter-focused cache inspector and space trimmer with:
+Fluttrim은 Flutter 개발 환경에서 발생하는 캐시/아티팩트를 안전하게 점검하고 정리하는 크로스플랫폼 도구입니다.
 
-- `packages/core`: pure Dart business logic (scan/plan/apply + safety rules)
-- `apps/cli`: thin Dart CLI wrapper around `packages/core`
-- `apps/desktop`: thin Flutter desktop GUI wrapper around `packages/core`
-- `apps/promo_web`: static promotional landing website (EN default + KO toggle)
+## 구성
 
-Scope: only Flutter-related caches/artifacts. No "general system cleaner" features.
+- `packages/core`: 순수 Dart 비즈니스 로직(스캔/플랜/적용/안전 규칙)
+- `apps/cli`: `packages/core`를 호출하는 CLI
+- `apps/desktop`: `packages/core`를 호출하는 Flutter 데스크톱 GUI
+- `apps/promo_web`: 홍보용 정적 랜딩 페이지(기본 EN + KO 토글)
 
-## License
+범위는 Flutter 관련 캐시/아티팩트로 한정하며, 범용 시스템 클리너 기능은 포함하지 않습니다.
+
+## 라이선스
 
 MIT (`LICENSE`)
 
-## Dev
+## 개발 실행
 
 - Core: `cd packages/core && dart test`
 - CLI: `cd apps/cli && dart run bin/fluttrim.dart --help`
 - Desktop: `cd apps/desktop && flutter run`
 - Promo web: `cd apps/promo_web && python3 -m http.server 8080`
 
-## Deployment
+## 배포
 
-- Desktop build artifacts (macOS/Windows/Linux): GitHub Actions `Desktop Release` workflow (`.github/workflows/desktop-release.yml`).
-- Promo landing page: Cloudflare Pages via `Promo Web Cloudflare Pages` workflow (`.github/workflows/promo-web-pages.yml`).
-- Promo web backend is optional. For pure landing pages, static hosting is enough. Add Firebase only if you need dynamic features (auth, database, server logic).
+- 데스크톱 아티팩트(macOS/Windows/Linux): GitHub Actions `Desktop Release`
+  - `.github/workflows/desktop-release.yml`
+- Promo 웹(Cloudflare Pages): GitHub Actions `Promo Web Cloudflare Pages`
+  - `.github/workflows/promo-web-pages.yml`
 
-### Cloudflare Pages Setup
+## Cloudflare Pages 설정
 
-Set these repository settings before running the workflow:
+워크플로 실행 전 저장소 설정이 필요합니다.
 
-- Secrets:
-  - `CLOUDFLARE_API_TOKEN` (Pages deploy permission)
+- Secrets
+  - `CLOUDFLARE_API_TOKEN`
   - `CLOUDFLARE_ACCOUNT_ID`
-- Variable:
-  - `CLOUDFLARE_PAGES_PROJECT` (Cloudflare Pages project name)
+- Variable
+  - `CLOUDFLARE_PAGES_PROJECT`
 
-Detailed guide: `docs/cloudflare-pages-setup.md`
+상세 가이드: `docs/cloudflare-pages-setup.md`
 
-Design/spec docs live in `fluttrim_planning_md_set/`.
+## 공개 범위 원칙
+
+- 외부 공개가 불필요한 내부 기획/시안 문서는 공개 저장소에 포함하지 않습니다.
+- PR 전 공개 범위 점검 기준은 `docs/open-source-maintenance.md`를 따릅니다.

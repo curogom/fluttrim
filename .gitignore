@@ -1,5 +1,8 @@
 # Misc
 .DS_Store
+internal/
+docs/private/
+fluttrim_planning_md_set/
 
 # IDEs
 .idea/

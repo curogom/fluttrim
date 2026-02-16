@@ -1,10 +1,10 @@
-# JSON Schemas
+# JSON 스키마
 
-This project produces machine-readable JSON outputs for scan / plan / cleanup.
+이 프로젝트는 스캔/플랜/정리 결과를 기계 처리 가능한 JSON으로 출력합니다.
 
 ## ScanResult
 
-`packages/core` model: `ScanResult.toJson()`
+`packages/core` 모델: `ScanResult.toJson()`
 
 ```json
 {
@@ -55,7 +55,8 @@ This project produces machine-readable JSON outputs for scan / plan / cleanup.
 }
 ```
 
-Notes:
+설명:
+
 - `profile`: `safe|medium|aggressive`
 - `category`: `project|xcode|fvm|global`
 - `risk`: `low|medium|high`
@@ -63,7 +64,7 @@ Notes:
 
 ## CleanupPlan
 
-`packages/core` model: `CleanupPlan.toJson()`
+`packages/core` 모델: `CleanupPlan.toJson()`
 
 ```json
 {
@@ -89,12 +90,13 @@ Notes:
 }
 ```
 
-Notes:
+설명:
+
 - `deleteMode`: `trash|permanent`
 
 ## CleanupResult
 
-`packages/core` model: `CleanupResult.toJson()`
+`packages/core` 모델: `CleanupResult.toJson()`
 
 ```json
 {
@@ -126,7 +128,8 @@ Notes:
 }
 ```
 
-Notes:
+설명:
+
 - `status`: `success|failed|skipped`
 
-Note: keep schemas stable to ensure CLI and GUI behave identically.
+CLI/GUI 일관성을 위해 스키마 호환성을 유지해야 합니다.

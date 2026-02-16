@@ -1,26 +1,26 @@
-name: Feature request
-description: Suggest an improvement
+name: 기능 제안
+description: 개선 아이디어를 제안합니다.
 labels: ["enhancement"]
 body:
   - type: textarea
     id: problem
     attributes:
-      label: Problem statement
-      description: What user problem does this solve?
+      label: 문제 정의
+      description: 어떤 사용자 문제를 해결하나요?
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
-      label: Proposed solution
-      description: Describe the expected behavior.
+      label: 제안 내용
+      description: 기대 동작을 구체적으로 설명해 주세요.
     validations:
       required: true
   - type: textarea
     id: scope
     attributes:
-      label: Scope check
-      description: Confirm the request is Flutter-cache related.
-      placeholder: This does/does not expand beyond Flutter-related caches.
+      label: 스코프 확인
+      description: Flutter 캐시 범위를 벗어나지 않는지 확인해 주세요.
+      placeholder: 본 제안은 Flutter 관련 캐시 범위 내/외 입니다.
     validations:
       required: true

@@ -5,7 +5,21 @@ on:
   pull_request:
 
 jobs:
+  public-scope-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guard internal-only files
+        run: |
+          blocked=$(git ls-files | grep -E '^(fluttrim_planning_md_set/|docs/private/|internal/)' || true)
+          if [ -n "$blocked" ]; then
+            echo "Internal-only paths are tracked. Remove them before merge:"
+            echo "$blocked"
+            exit 1
+          fi
+
   core:
+    needs: public-scope-guard
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,6 +41,7 @@ jobs:
         run: dart test
 
   cli:
+    needs: public-scope-guard
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +60,7 @@ jobs:
         run: dart analyze
 
   desktop-linux-build:
+    needs: public-scope-guard
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -67,4 +83,3 @@ jobs:
       - name: Desktop build (linux debug)
         working-directory: apps/desktop
         run: flutter build linux --debug
-

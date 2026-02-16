@@ -1,15 +1,14 @@
-# Security Policy
+# 보안 정책
 
-## Reporting a Vulnerability
+## 취약점 제보
 
-Please do not open public issues for security vulnerabilities.
+보안 이슈는 공개 이슈로 등록하지 말아 주세요.
 
-Send details to `i_am@curogom.dev` including:
+다음 정보를 포함해 `i_am@curogom.dev`로 제보해 주세요.
 
-- Affected component(s)
-- Reproduction steps or proof-of-concept
-- Impact assessment
-- Suggested fix (if available)
+- 영향 받는 컴포넌트
+- 재현 절차 또는 PoC
+- 영향도(데이터/권한/범위)
+- 가능하다면 수정 제안
 
-We will acknowledge receipt and respond as soon as possible.
-
+접수 후 확인 응답 및 후속 조치를 가능한 빠르게 안내드립니다.

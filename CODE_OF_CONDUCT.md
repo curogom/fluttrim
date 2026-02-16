@@ -1,27 +1,26 @@
-# Code of Conduct
+# 행동 강령
 
-## Our Commitment
+## 우리의 약속
 
-We want this project to be welcoming, respectful, and constructive for everyone.
+이 프로젝트는 누구에게나 존중받고, 건설적으로 기여할 수 있는 환경을 지향합니다.
 
-## Expected Behavior
+## 기대 행동
 
-- Be respectful and professional.
-- Focus on technical discussion, not people.
-- Assume good intent and ask clarifying questions before escalating.
-- Give actionable feedback.
+- 상호 존중과 전문적 커뮤니케이션 유지
+- 사람이 아닌 문제/코드 중심으로 토론
+- 선의 가정을 바탕으로 사실 확인 후 판단
+- 재현 가능한 근거와 실행 가능한 피드백 제공
 
-## Unacceptable Behavior
+## 허용되지 않는 행동
 
-- Harassment, hate speech, discrimination, or personal attacks.
-- Threats, doxxing, or intimidation.
-- Repeated disruptive behavior after maintainers request a stop.
+- 혐오, 차별, 인신공격, 괴롭힘
+- 위협, 사생활 침해(도싱), 협박
+- 유지관리자 요청 이후 반복되는 방해 행동
 
-## Enforcement
+## 집행
 
-Maintainers may edit, remove, or reject content that violates this policy, and may temporarily or permanently restrict participation when needed.
+유지관리자는 정책 위반 콘텐츠를 편집/삭제/거절할 수 있으며, 필요 시 참여를 일시/영구 제한할 수 있습니다.
 
-## Reporting
+## 신고
 
-Report concerns to `i_am@curogom.dev` with relevant links/screenshots.
-
+문제 발생 시 관련 링크/스크린샷과 함께 `i_am@curogom.dev`로 연락해 주세요.

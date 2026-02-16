@@ -1,16 +1,17 @@
 # fluttrim_desktop
 
-A new Flutter project.
+Fluttrim 데스크톱 GUI 앱입니다.
 
-## Getting Started
+## 실행
 
-This project is a starting point for a Flutter application.
+```bash
+cd apps/desktop
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
+## 주요 원칙
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- 비즈니스 로직은 `packages/core`에만 위치
+- GUI는 core API를 호출하는 얇은 프론트엔드
+- Preview-before-apply / allowlist / containment 안전 규칙 준수

@@ -1,19 +1,19 @@
-name: Bug report
-description: Report a reproducible bug
+name: 버그 제보
+description: 재현 가능한 버그를 제보합니다.
 labels: ["bug"]
 body:
   - type: textarea
     id: summary
     attributes:
-      label: Summary
-      description: What happened?
+      label: 요약
+      description: 어떤 문제가 발생했나요?
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Steps to reproduce
-      description: Please provide clear reproduction steps.
+      label: 재현 절차
+      description: 재현 단계를 구체적으로 작성해 주세요.
     validations:
       required: true
   - type: input
@@ -26,11 +26,11 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: Expected behavior
+      label: 기대 동작
     validations:
       required: true
   - type: textarea
     id: logs
     attributes:
-      label: Logs / Screenshots
-      description: Include relevant CLI output or screenshots.
+      label: 로그 / 스크린샷
+      description: 관련 CLI 출력 또는 화면 캡처를 첨부해 주세요.

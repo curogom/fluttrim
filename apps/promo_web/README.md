@@ -1,18 +1,18 @@
 # Fluttrim Promo Web
 
-Static landing site for promoting Fluttrim.
+Fluttrim 홍보용 정적 랜딩 페이지입니다.
 
-## Run locally
+## 로컬 실행
 
 ```bash
 cd apps/promo_web
 python3 -m http.server 8080
 ```
 
-Open `http://localhost:8080`.
+브라우저에서 `http://localhost:8080` 접속.
 
-## Notes
+## 참고
 
-- Default language is English with Korean toggle.
-- Pure static HTML/CSS/JS (no framework dependency).
-- Safe to host on any static host (GitHub Pages, Netlify, Cloudflare Pages).
+- 기본 언어 EN, KO 토글 제공
+- 순수 정적 HTML/CSS/JS (프레임워크 의존성 없음)
+- Cloudflare Pages 등 정적 호스팅에 바로 배포 가능
