@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Core pub get
+        working-directory: packages/core
+        run: dart pub get
+      - name: Core format
+        working-directory: packages/core
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Core analyze
+        working-directory: packages/core
+        run: dart analyze
+      - name: Core test
+        working-directory: packages/core
+        run: dart test
+
+  cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: CLI pub get
+        working-directory: apps/cli
+        run: dart pub get
+      - name: CLI format
+        working-directory: apps/cli
+        run: dart format --output=none --set-exit-if-changed .
+      - name: CLI analyze
+        working-directory: apps/cli
+        run: dart analyze
+
+  desktop-linux-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Desktop pub get
+        working-directory: apps/desktop
+        run: flutter pub get
+      - name: Desktop analyze
+        working-directory: apps/desktop
+        run: flutter analyze
+      - name: Desktop build (linux debug)
+        working-directory: apps/desktop
+        run: flutter build linux --debug
+

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluttrim | Flutter Cache Inspector</title>
+    <meta
+      name="description"
+      content="Fluttrim helps Flutter teams find and safely clean cache bloat across macOS, Windows, and Ubuntu."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-a" aria-hidden="true"></div>
+    <div class="ambient ambient-b" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <span>Fluttrim</span>
+      </div>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button data-lang-btn="en" class="is-active">EN</button>
+        <button data-lang-btn="ko">KO</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero container">
+        <div class="hero-copy">
+          <p class="eyebrow" data-i18n="hero_eyebrow">Flutter cache clarity, not guesswork.</p>
+          <h1 data-i18n="hero_title">
+            Recover disk space safely with a Flutter-first cache inspector.
+          </h1>
+          <p class="hero-body" data-i18n="hero_body">
+            Fluttrim scans Flutter projects, builds explicit cleanup plans, and applies with safe defaults.
+            Desktop GUI + CLI with identical core rules.
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#download" data-i18n="cta_download">Get Early Access</a>
+            <a class="btn btn-ghost" href="#features" data-i18n="cta_features">Explore Features</a>
+          </div>
+          <ul class="pill-row" aria-label="platform badges">
+            <li>macOS</li>
+            <li>Windows 10/11</li>
+            <li>Ubuntu</li>
+          </ul>
+        </div>
+        <div class="hero-panel">
+          <div class="panel-shell">
+            <div class="panel-top">
+              <span class="dot red"></span>
+              <span class="dot amber"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="panel-content">
+              <div class="metric">
+                <span data-i18n="metric_reclaimable">Total Reclaimable</span>
+                <strong>12.4 GB</strong>
+              </div>
+              <div class="bars">
+                <div><label>DerivedData</label><i style="--w: 82%"></i></div>
+                <div><label>Pub Cache</label><i style="--w: 63%"></i></div>
+                <div><label>Gradle</label><i style="--w: 48%"></i></div>
+              </div>
+              <code>Preview first · Trash by default · Guardrails always on</code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" class="container">
+        <h2 data-i18n="features_title">Built for Flutter developer workflows</h2>
+        <div class="feature-grid">
+          <article>
+            <h3 data-i18n="feature_scan_title">Smart scan profiles</h3>
+            <p data-i18n="feature_scan_body">
+              SAFE / MEDIUM / AGGRESSIVE targeting only Flutter-related caches and artifacts.
+            </p>
+          </article>
+          <article>
+            <h3 data-i18n="feature_plan_title">Mandatory plan preview</h3>
+            <p data-i18n="feature_plan_body">
+              Every cleanup starts with an explicit path-by-path plan and risk labels.
+            </p>
+          </article>
+          <article>
+            <h3 data-i18n="feature_xcode_title">Xcode attribution</h3>
+            <p data-i18n="feature_xcode_body">
+              DerivedData entries are marked Attributed/Unknown with confidence evidence.
+            </p>
+          </article>
+          <article>
+            <h3 data-i18n="feature_fvm_title">FVM visibility</h3>
+            <p data-i18n="feature_fvm_body">
+              See installed SDK usage by project and clean unused SDKs with confirmation.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="container split">
+        <div>
+          <h2 data-i18n="trust_title">Safety is product behavior, not a disclaimer</h2>
+          <ul class="checklist">
+            <li data-i18n="trust_1">Allowlist + containment guards prevent out-of-scope deletions.</li>
+            <li data-i18n="trust_2">Unknown attribution is blocked by default unless explicitly enabled.</li>
+            <li data-i18n="trust_3">Trash-first cleanup mode where OS supports it.</li>
+            <li data-i18n="trust_4">Machine-readable JSON logs for scan and cleanup runs.</li>
+          </ul>
+        </div>
+        <aside class="stat-card">
+          <p data-i18n="stat_label">Core design promise</p>
+          <strong data-i18n="stat_title">Same rules in CLI and GUI</strong>
+          <span data-i18n="stat_body">One shared core engine. No duplicated cleanup logic.</span>
+        </aside>
+      </section>
+
+      <section id="download" class="container cta-panel">
+        <h2 data-i18n="download_title">Join the early desktop preview</h2>
+        <p data-i18n="download_body">
+          Tell us your OS + team size and we will prioritize your onboarding slot.
+        </p>
+        <form class="lead-form" onsubmit="event.preventDefault(); window.alert('Thanks! We will contact you soon.');">
+          <input type="email" placeholder="team@company.com" required />
+          <button type="submit" data-i18n="download_button">Request Invite</button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="container footer">
+      <span>Fluttrim</span>
+      <span data-i18n="footer_tagline">Flutter-focused cache inspector and space trimmer.</span>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

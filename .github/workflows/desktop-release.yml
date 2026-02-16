@@ -1,0 +1,60 @@
+name: Desktop Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-desktop:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux
+            artifact_name: fluttrim-linux
+            artifact_path: apps/desktop/build/linux/x64/release/bundle
+          - os: windows-latest
+            target: windows
+            artifact_name: fluttrim-windows
+            artifact_path: apps/desktop/build/windows/x64/runner/Release
+          - os: macos-latest
+            target: macos
+            artifact_name: fluttrim-macos
+            artifact_path: apps/desktop/build/macos/Build/Products/Release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Linux build dependencies
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Flutter pub get
+        working-directory: apps/desktop
+        run: flutter pub get
+
+      - name: Build desktop app
+        working-directory: apps/desktop
+        run: flutter build ${{ matrix.target }} --release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+          if-no-files-found: error

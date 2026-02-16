@@ -1,0 +1,19 @@
+name: fluttrim_cli
+description: Thin CLI wrapper around fluttrim_core.
+version: 0.0.1
+# Not intended for publishing to pub.dev (monorepo app).
+publish_to: 'none'
+# repository: https://github.com/my_org/my_repo
+
+environment:
+  sdk: ^3.10.0
+
+# Add regular dependencies here.
+dependencies:
+  args: ^2.7.0
+  fluttrim_core:
+    path: ../../packages/core
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

@@ -1,0 +1,16 @@
+# Misc
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+coverage/
+
+# Flutter generated plugin files
+.flutter-plugins
+.flutter-plugins-dependencies
