@@ -1,54 +1,24 @@
-name: Desktop Release
+name: Desktop Release macOS
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag (e.g., v1.0.0)'
+        description: "Release tag (e.g., v1.0.0)"
         required: true
         type: string
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
 
 jobs:
-  resolve-release-tag:
-    runs-on: ubuntu-latest
-    outputs:
-      release_tag: ${{ steps.resolve.outputs.release_tag }}
-    steps:
-      - id: resolve
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            tag="${{ inputs.tag }}"
-          else
-            tag="${GITHUB_REF_NAME}"
-          fi
-          echo "release_tag=$tag" >> "$GITHUB_OUTPUT"
-
-  build-desktop:
-    needs: resolve-release-tag
-    name: Build ${{ matrix.target }}
-    runs-on: ${{ matrix.os }}
+  build-macos:
+    runs-on: macos-latest
     env:
-      RELEASE_TAG: ${{ needs.resolve-release-tag.outputs.release_tag }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: linux
-            package_base: fluttrim-linux
-          - os: windows-latest
-            target: windows
-            package_base: fluttrim-windows
-          - os: macos-latest
-            target: macos
-            package_base: fluttrim-macos
-
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -57,22 +27,15 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Linux build dependencies
-        if: matrix.target == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
-
       - name: Flutter pub get
         working-directory: apps/desktop
         run: flutter pub get
 
-      - name: Build desktop app
+      - name: Build desktop app (macOS)
         working-directory: apps/desktop
-        run: flutter build ${{ matrix.target }} --release
+        run: flutter build macos --release
 
       - name: Configure macOS signing keychain
-        if: matrix.target == 'macos'
         env:
           MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
           MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
@@ -133,7 +96,6 @@ jobs:
           echo "SIGNING_IDENTITY=$RESOLVED_SIGNING_IDENTITY" >> "$GITHUB_ENV"
 
       - name: Sign macOS app bundle
-        if: matrix.target == 'macos'
         run: |
           if [ -z "${SIGNING_IDENTITY:-}" ]; then
             echo "Missing resolved signing identity."
@@ -153,7 +115,6 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
       - name: Notarize and staple macOS app bundle
-        if: matrix.target == 'macos'
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -178,68 +139,37 @@ jobs:
           xcrun stapler staple "$APP_PATH"
           xcrun stapler validate "$APP_PATH"
 
-      - name: Package Linux bundle
-        if: matrix.target == 'linux'
-        run: |
-          pkg="$RUNNER_TEMP/${{ matrix.package_base }}-${RELEASE_TAG}.tar.gz"
-          tar -C apps/desktop/build/linux/x64/release -czf "$pkg" bundle
-          echo "PACKAGED_FILE=$pkg" >> "$GITHUB_ENV"
-
       - name: Package macOS bundle
-        if: matrix.target == 'macos'
         run: |
-          pkg="$RUNNER_TEMP/${{ matrix.package_base }}-${RELEASE_TAG}.zip"
+          pkg="$RUNNER_TEMP/fluttrim-macos-${RELEASE_TAG}.zip"
           ditto -c -k --sequesterRsrc --keepParent \
             apps/desktop/build/macos/Build/Products/Release/fluttrim_desktop.app \
             "$pkg"
           echo "PACKAGED_FILE=$pkg" >> "$GITHUB_ENV"
 
-      - name: Package Windows bundle
-        if: matrix.target == 'windows'
-        shell: pwsh
-        run: |
-          $pkg = "$env:RUNNER_TEMP\\${{ matrix.package_base }}-$env:RELEASE_TAG.zip"
-          Compress-Archive -Path "apps/desktop/build/windows/x64/runner/Release/*" -DestinationPath $pkg -Force
-          "PACKAGED_FILE=$pkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Upload release package
+      - name: Upload packaged artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ matrix.target }}
+          name: release-macos
           path: ${{ env.PACKAGED_FILE }}
           if-no-files-found: error
 
+      - name: Publish release asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              --title "$RELEASE_TAG" \
+              --notes "Desktop binaries for Fluttrim." || true
+          fi
+
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1
+          gh release upload "$RELEASE_TAG" "$PACKAGED_FILE" --clobber
+
       - name: Cleanup macOS signing keychain
-        if: always() && matrix.target == 'macos'
+        if: always()
         run: |
           if [ -n "${SIGNING_KEYCHAIN:-}" ] && [ -f "$SIGNING_KEYCHAIN" ]; then
             security delete-keychain "$SIGNING_KEYCHAIN" || true
-          fi
-
-  publish-release:
-    needs:
-      - resolve-release-tag
-      - build-desktop
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      RELEASE_TAG: ${{ needs.resolve-release-tag.outputs.release_tag }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download packaged artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: release-*
-          path: dist
-          merge-multiple: true
-
-      - name: Create or update GitHub release
-        run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" dist/* --clobber
-          else
-            gh release create "$RELEASE_TAG" dist/* \
-              --title "$RELEASE_TAG" \
-              --notes "Desktop binaries for Fluttrim."
           fi

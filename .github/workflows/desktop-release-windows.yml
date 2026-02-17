@@ -1,0 +1,73 @@
+name: Desktop Release Windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g., v1.0.0)"
+        required: true
+        type: string
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        working-directory: apps/desktop
+        run: flutter pub get
+
+      - name: Build desktop app (Windows)
+        working-directory: apps/desktop
+        run: flutter build windows --release
+
+      - name: Package Windows bundle
+        shell: pwsh
+        run: |
+          $pkg = "$env:RUNNER_TEMP\\fluttrim-windows-$env:RELEASE_TAG.zip"
+          Compress-Archive -Path "apps/desktop/build/windows/x64/runner/Release/*" -DestinationPath $pkg -Force
+          "PACKAGED_FILE=$pkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Upload packaged artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: ${{ env.PACKAGED_FILE }}
+          if-no-files-found: error
+
+      - name: Publish release asset
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          gh release view $env:RELEASE_TAG *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $env:RELEASE_TAG --title $env:RELEASE_TAG --notes "Desktop binaries for Fluttrim." *> $null
+            if ($LASTEXITCODE -ne 0) {
+              gh release view $env:RELEASE_TAG *> $null
+              if ($LASTEXITCODE -ne 0) {
+                throw "Unable to create or resolve release $env:RELEASE_TAG"
+              }
+            }
+          }
+
+          gh release upload $env:RELEASE_TAG $env:PACKAGED_FILE --clobber
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to upload $env:PACKAGED_FILE to release $env:RELEASE_TAG"
+          }
