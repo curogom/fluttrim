@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 class AppController extends ChangeNotifier {
   AppController() {
-    _roots = <String>[Directory.current.path];
+    _roots = _buildInitialRoots();
     Future<void>.microtask(refreshFvmStatus);
     Future<void>.microtask(refreshGlobalCaches);
     Future<void>.microtask(refreshHistory);
@@ -181,17 +181,21 @@ class AppController extends ChangeNotifier {
   }
 
   void addRoot(String root) {
-    final value = root.trim();
-    if (value.isEmpty) return;
-    if (_roots.contains(value)) return;
-    _roots = <String>[..._roots, value];
+    final normalized = _normalizeRoot(root);
+    if (normalized == null) return;
+    if (!Directory(normalized).existsSync()) {
+      _setError('Root directory does not exist: $normalized');
+      return;
+    }
+    if (_roots.contains(normalized)) return;
+    _roots = <String>[..._roots, normalized];
     notifyListeners();
   }
 
   void removeRoot(String root) {
     _roots = _roots.where((value) => value != root).toList();
     if (_roots.isEmpty) {
-      _roots = <String>[Directory.current.path];
+      _roots = _buildInitialRoots();
     }
     notifyListeners();
   }
@@ -757,4 +761,87 @@ class AppController extends ChangeNotifier {
     _errorMessage = message;
     notifyListeners();
   }
+}
+
+List<String> _buildInitialRoots() {
+  final home = _resolveHomePath();
+  if (home == null || home.isEmpty) {
+    return <String>[Directory.current.path];
+  }
+
+  final candidates = <String>[
+    _joinPath(home, 'Developer'),
+    _joinPath(home, 'dev'),
+    _joinPath(home, 'Dev'),
+    _joinPath(home, 'Projects'),
+    _joinPath(home, 'workspace'),
+    _joinPath(home, 'Work'),
+  ];
+
+  final existing = <String>[];
+  for (final candidate in candidates) {
+    if (Directory(candidate).existsSync()) {
+      existing.add(candidate);
+    }
+  }
+
+  if (existing.isNotEmpty) {
+    return existing;
+  }
+
+  if (Directory(home).existsSync()) {
+    return <String>[home];
+  }
+
+  return <String>[Directory.current.path];
+}
+
+String? _resolveHomePath() {
+  final env = Platform.environment;
+
+  final home = env['HOME']?.trim();
+  if (home != null && home.isNotEmpty) {
+    return home;
+  }
+
+  final userProfile = env['USERPROFILE']?.trim();
+  if (userProfile != null && userProfile.isNotEmpty) {
+    return userProfile;
+  }
+
+  final drive = env['HOMEDRIVE']?.trim();
+  final path = env['HOMEPATH']?.trim();
+  if (drive != null && drive.isNotEmpty && path != null && path.isNotEmpty) {
+    return '$drive$path';
+  }
+
+  return null;
+}
+
+String? _normalizeRoot(String value) {
+  var root = value.trim();
+  if (root.isEmpty) {
+    return null;
+  }
+
+  if (root == '~' || root.startsWith('~/') || root.startsWith('~\\')) {
+    final home = _resolveHomePath();
+    if (home != null) {
+      if (root == '~') {
+        root = home;
+      } else {
+        root = _joinPath(home, root.substring(2));
+      }
+    }
+  }
+
+  return Directory(root).absolute.path;
+}
+
+String _joinPath(String base, String child) {
+  final separator = Platform.pathSeparator;
+  if (base.endsWith(separator)) {
+    return '$base$child';
+  }
+  return '$base$separator$child';
 }
