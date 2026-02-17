@@ -7,6 +7,7 @@
 - 제품 코드(`packages/`, `apps/`)
 - 실행/배포 문서(`README`, `docs/` 내 공개 문서)
 - 오픈소스 운영 파일(`LICENSE`, `CONTRIBUTING`, `SECURITY`, `CODE_OF_CONDUCT`)
+- 운영 정책 파일(`SUPPORT`, `GOVERNANCE`, `MAINTAINERS`, `ROADMAP`)
 
 ## 공개 제외
 
