@@ -93,9 +93,12 @@ jobs:
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          security default-keychain -d user -s "$KEYCHAIN_PATH"
           security import "$CERT_PATH" \
             -k "$KEYCHAIN_PATH" \
             -P "$MACOS_CERT_PASSWORD" \
+            -A \
             -T /usr/bin/codesign \
             -T /usr/bin/security
           security set-key-partition-list \
@@ -104,20 +107,20 @@ jobs:
             -k "$KEYCHAIN_PASSWORD" \
             "$KEYCHAIN_PATH"
 
-          echo "Available code signing identities in imported keychain:"
-          security find-identity -v -p codesigning "$KEYCHAIN_PATH" || true
+          echo "Available code signing identities in current keychain search list:"
+          security find-identity -v -p codesigning || true
 
           RESOLVED_SIGNING_IDENTITY=""
           if [ -n "${MACOS_CODESIGN_IDENTITY:-}" ]; then
             if echo "$MACOS_CODESIGN_IDENTITY" | grep -Eq '^[A-F0-9]{40}$'; then
               RESOLVED_SIGNING_IDENTITY="$MACOS_CODESIGN_IDENTITY"
             else
-              RESOLVED_SIGNING_IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | awk -v target="$MACOS_CODESIGN_IDENTITY" 'index($0, target) {print $2; exit}')"
+              RESOLVED_SIGNING_IDENTITY="$(security find-identity -v -p codesigning | awk -v target="$MACOS_CODESIGN_IDENTITY" 'index($0, target) {print $2; exit}')"
             fi
           fi
 
           if [ -z "$RESOLVED_SIGNING_IDENTITY" ]; then
-            RESOLVED_SIGNING_IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | awk '/Developer ID Application/ {print $2; exit}')"
+            RESOLVED_SIGNING_IDENTITY="$(security find-identity -v -p codesigning | awk '/Developer ID Application/ {print $2; exit}')"
           fi
 
           if [ -z "$RESOLVED_SIGNING_IDENTITY" ]; then
@@ -144,7 +147,6 @@ jobs:
           echo "Using signing identity hash: $SIGNING_IDENTITY"
           codesign --force --deep --options runtime --timestamp \
             --entitlements "$ENTITLEMENTS_PATH" \
-            --keychain "$SIGNING_KEYCHAIN" \
             --sign "$SIGNING_IDENTITY" \
             "$APP_PATH"
 
