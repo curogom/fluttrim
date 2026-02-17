@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluttrim Docs Viewer</title>
+    <meta name="description" content="Fluttrim documentation viewer." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar container">
+      <div class="brand">
+        <img src="../assets/logo-cropped.png" alt="Fluttrim logo" class="brand-mark" />
+        <span>Fluttrim Docs</span>
+      </div>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/docs/" class="active">Docs</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <article class="panel">
+        <h1 id="doc-title">Loading...</h1>
+        <div class="doc-meta">
+          <a id="source-link" class="btn" href="#" target="_blank" rel="noopener noreferrer">Source</a>
+          <a class="btn" href="/docs/">All docs</a>
+        </div>
+        <div id="doc-body" class="doc-body"></div>
+      </article>
+      <p class="notice">문서 렌더링 실패 시 Source 링크로 원문을 확인할 수 있습니다.</p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="./docs.js"></script>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get("doc");
+      const doc = window.FluttrimDocs.getDocBySlug(slug);
+      const titleNode = document.getElementById("doc-title");
+      const bodyNode = document.getElementById("doc-body");
+      const sourceNode = document.getElementById("source-link");
+
+      if (!doc) {
+        titleNode.textContent = "Document not found";
+        bodyNode.innerHTML = "<p>Invalid document path. Use <a href=\"/docs/\">/docs/</a> to browse available documents.</p>";
+      } else {
+        document.title = `${doc.title} | Fluttrim Docs`;
+        titleNode.textContent = doc.title;
+        sourceNode.href = doc.source;
+        sourceNode.textContent = "Source";
+
+        fetch(`./${doc.file}`)
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}`);
+            }
+            return res.text();
+          })
+          .then((markdown) => {
+            bodyNode.innerHTML = window.marked.parse(markdown, { breaks: true });
+          })
+          .catch((error) => {
+            bodyNode.innerHTML = `<p>Failed to load document (${error.message}).</p>`;
+          });
+      }
+    </script>
+  </body>
+</html>

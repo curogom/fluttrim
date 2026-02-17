@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluttrim Docs</title>
+    <meta name="description" content="Fluttrim project and operations documentation." />
+    <link rel="canonical" href="https://fluttrim.curogom.dev/docs/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar container">
+      <div class="brand">
+        <img src="../assets/logo-cropped.png" alt="Fluttrim logo" class="brand-mark" />
+        <span>Fluttrim Docs</span>
+      </div>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/docs/" class="active">Docs</a>
+        <a href="https://pub.dev/packages/fluttrim_core" target="_blank" rel="noopener noreferrer"
+          >pub.dev</a
+        >
+        <a href="https://github.com/curogom/fluttrim" target="_blank" rel="noopener noreferrer"
+          >GitHub</a
+        >
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <h1>Documentation Paths are now hosted under <code>/docs</code>.</h1>
+        <p>
+          프로젝트/운영 문서를 사이트 경로로 직접 제공합니다. 각 문서는 GitHub 원문(Source) 링크도 함께
+          제공합니다.
+        </p>
+      </section>
+
+      <section>
+        <h2>Core Docs</h2>
+        <div id="core-docs" class="grid"></div>
+      </section>
+
+      <section>
+        <h2>Operations Docs</h2>
+        <div id="ops-docs" class="grid"></div>
+      </section>
+
+      <p class="notice">
+        Note: 문서 원본은 저장소 파일이며, 웹 문서는 배포 시점 사본입니다.
+      </p>
+    </main>
+
+    <script src="./docs.js"></script>
+    <script>
+      window.FluttrimDocs.renderDocCards(document.getElementById("core-docs"), "core");
+      window.FluttrimDocs.renderDocCards(document.getElementById("ops-docs"), "ops");
+    </script>
+  </body>
+</html>
