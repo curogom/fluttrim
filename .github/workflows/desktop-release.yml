@@ -71,6 +71,88 @@ jobs:
         working-directory: apps/desktop
         run: flutter build ${{ matrix.target }} --release
 
+      - name: Configure macOS signing keychain
+        if: matrix.target == 'macos'
+        env:
+          MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          if [ -z "$MACOS_CERT_P12_BASE64" ] || [ -z "$MACOS_CERT_PASSWORD" ]; then
+            echo "Missing macOS signing secrets: MACOS_CERT_P12_BASE64 / MACOS_CERT_PASSWORD"
+            exit 1
+          fi
+
+          CERT_PATH="$RUNNER_TEMP/developer_id_application.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/fluttrim-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+
+          (echo "$MACOS_CERT_P12_BASE64" | base64 --decode > "$CERT_PATH" 2>/dev/null) || \
+            (echo "$MACOS_CERT_P12_BASE64" | base64 -D > "$CERT_PATH")
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$MACOS_CERT_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_PATH"
+
+          echo "SIGNING_KEYCHAIN=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      - name: Sign macOS app bundle
+        if: matrix.target == 'macos'
+        env:
+          MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+        run: |
+          if [ -z "$MACOS_CODESIGN_IDENTITY" ]; then
+            echo "Missing macOS signing secret: MACOS_CODESIGN_IDENTITY"
+            exit 1
+          fi
+
+          APP_PATH="apps/desktop/build/macos/Build/Products/Release/fluttrim_desktop.app"
+          ENTITLEMENTS_PATH="apps/desktop/macos/Runner/Release.entitlements"
+
+          xattr -cr "$APP_PATH"
+          codesign --force --deep --options runtime --timestamp \
+            --entitlements "$ENTITLEMENTS_PATH" \
+            --keychain "$SIGNING_KEYCHAIN" \
+            --sign "$MACOS_CODESIGN_IDENTITY" \
+            "$APP_PATH"
+
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+      - name: Notarize and staple macOS app bundle
+        if: matrix.target == 'macos'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_TEAM_ID" ] || [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ]; then
+            echo "Missing notarization secrets: APPLE_ID / APPLE_TEAM_ID / APPLE_APP_SPECIFIC_PASSWORD"
+            exit 1
+          fi
+
+          APP_PATH="apps/desktop/build/macos/Build/Products/Release/fluttrim_desktop.app"
+          NOTARY_ZIP="$RUNNER_TEMP/fluttrim_desktop-notary.zip"
+
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$NOTARY_ZIP"
+
+          xcrun notarytool submit "$NOTARY_ZIP" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --wait
+
+          xcrun stapler staple "$APP_PATH"
+          xcrun stapler validate "$APP_PATH"
+
       - name: Package Linux bundle
         if: matrix.target == 'linux'
         run: |
@@ -101,6 +183,13 @@ jobs:
           name: release-${{ matrix.target }}
           path: ${{ env.PACKAGED_FILE }}
           if-no-files-found: error
+
+      - name: Cleanup macOS signing keychain
+        if: always() && matrix.target == 'macos'
+        run: |
+          if [ -n "${SIGNING_KEYCHAIN:-}" ] && [ -f "$SIGNING_KEYCHAIN" ]; then
+            security delete-keychain "$SIGNING_KEYCHAIN" || true
+          fi
 
   publish-release:
     needs:
