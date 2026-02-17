@@ -396,6 +396,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
     }).toList()..sort((a, b) => b.totalBytes.compareTo(a.totalBytes));
 
     final selectedProject = controller.selectedProject;
+    final selectedProjectRoots = controller.selectedProjectRoots;
     final selectedTargetIds = controller.selectedTargetIdsForSelectedProject();
 
     return Scaffold(
@@ -437,6 +438,65 @@ class _ProjectsPageState extends State<ProjectsPage> {
           ),
           const SizedBox(height: 12),
           Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${l10n.selectedProjectsLabel}: ${selectedProjectRoots.length}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.batchCleanupHint(selectedProjectRoots.length),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: filtered.isEmpty
+                            ? null
+                            : () => controller.selectAllProjects(
+                                filtered.map((project) => project.rootPath),
+                              ),
+                        icon: const Icon(Icons.done_all_outlined),
+                        label: Text(l10n.selectAllVisible),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: selectedProjectRoots.isEmpty
+                            ? null
+                            : controller.clearProjectSelection,
+                        icon: const Icon(Icons.clear_all_outlined),
+                        label: Text(l10n.clearSelection),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: selectedProjectRoots.isEmpty
+                            ? null
+                            : controller.previewPlanForSelectedProjects,
+                        icon: const Icon(Icons.visibility_outlined),
+                        label: Text(l10n.previewPlan),
+                      ),
+                      FilledButton.icon(
+                        onPressed:
+                            controller.currentPlan == null ||
+                                controller.isApplying
+                            ? null
+                            : () => _onApplyPressed(context, controller),
+                        icon: const Icon(Icons.cleaning_services_outlined),
+                        label: Text(l10n.applyPlan),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
             child: SizedBox(
               height: 320,
               child: filtered.isEmpty
@@ -453,10 +513,22 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final project = filtered[index];
-                        final selected =
+                        final focused =
                             controller.selectedProjectRoot == project.rootPath;
+                        final selectedForBatch = selectedProjectRoots.contains(
+                          project.rootPath,
+                        );
                         return ListTile(
-                          selected: selected,
+                          selected: focused,
+                          leading: Checkbox(
+                            value: selectedForBatch,
+                            onChanged: (value) {
+                              controller.toggleProjectSelection(
+                                project.rootPath,
+                                value ?? false,
+                              );
+                            },
+                          ),
                           title: Text(project.name),
                           subtitle: Text(
                             project.rootPath,
@@ -492,6 +564,20 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           selectedProject.rootPath,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
+                        const SizedBox(height: 8),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(l10n.includeInBatchCleanup),
+                          value: selectedProjectRoots.contains(
+                            selectedProject.rootPath,
+                          ),
+                          onChanged: (value) {
+                            controller.toggleProjectSelection(
+                              selectedProject.rootPath,
+                              value,
+                            );
+                          },
+                        ),
                         const SizedBox(height: 12),
                         ...selectedProject.targets.map((target) {
                           final checked = selectedTargetIds.contains(
@@ -506,10 +592,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
                             value: checked,
                             onChanged: target.exists
                                 ? (value) {
-                                    controller.toggleProjectTargetSelection(
-                                      target.targetId,
-                                      value ?? false,
-                                    );
+                                    controller
+                                        .toggleProjectTargetSelectionForProject(
+                                          selectedProject.rootPath,
+                                          target.targetId,
+                                          value ?? false,
+                                        );
                                   }
                                 : null,
                             dense: true,
@@ -528,8 +616,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           runSpacing: 8,
                           children: [
                             OutlinedButton.icon(
-                              onPressed:
-                                  controller.previewPlanForSelectedProject,
+                              onPressed: selectedProjectRoots.isEmpty
+                                  ? null
+                                  : controller.previewPlanForSelectedProjects,
                               icon: const Icon(Icons.visibility_outlined),
                               label: Text(l10n.previewPlan),
                             ),

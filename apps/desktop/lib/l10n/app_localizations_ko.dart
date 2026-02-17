@@ -88,6 +88,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noMatchingProjects => '검색 결과가 없습니다.';
 
   @override
+  String get selectedProjectsLabel => '선택된 프로젝트';
+
+  @override
+  String get selectAllVisible => '보이는 항목 전체 선택';
+
+  @override
+  String get clearSelection => '선택 해제';
+
+  @override
+  String get includeInBatchCleanup => '일괄 정리에 포함';
+
+  @override
+  String batchCleanupHint(int count) {
+    return '미리보기/적용은 선택된 프로젝트 $count개를 대상으로 실행됩니다.';
+  }
+
+  @override
   String get selectProjectForDetails => '상세 보기를 위해 프로젝트를 선택하세요.';
 
   @override

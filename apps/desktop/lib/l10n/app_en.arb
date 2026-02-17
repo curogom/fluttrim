@@ -26,6 +26,18 @@
   "searchProjects": "Search projects",
   "scanToDiscoverProjects": "Run scan to discover projects.",
   "noMatchingProjects": "No matching projects.",
+  "selectedProjectsLabel": "Selected projects",
+  "selectAllVisible": "Select all visible",
+  "clearSelection": "Clear selection",
+  "includeInBatchCleanup": "Include in batch cleanup",
+  "batchCleanupHint": "Plan and apply will run across {count} selected project(s).",
+  "@batchCleanupHint": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "selectProjectForDetails": "Select a project to view details.",
   "projectDetail": "Project detail",
   "targetNotFound": "Target not found",

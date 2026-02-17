@@ -89,6 +89,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noMatchingProjects => 'No matching projects.';
 
   @override
+  String get selectedProjectsLabel => 'Selected projects';
+
+  @override
+  String get selectAllVisible => 'Select all visible';
+
+  @override
+  String get clearSelection => 'Clear selection';
+
+  @override
+  String get includeInBatchCleanup => 'Include in batch cleanup';
+
+  @override
+  String batchCleanupHint(int count) {
+    return 'Plan and apply will run across $count selected project(s).';
+  }
+
+  @override
   String get selectProjectForDetails => 'Select a project to view details.';
 
   @override

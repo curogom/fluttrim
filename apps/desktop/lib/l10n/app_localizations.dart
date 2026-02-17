@@ -254,6 +254,36 @@ abstract class AppLocalizations {
   /// **'No matching projects.'**
   String get noMatchingProjects;
 
+  /// No description provided for @selectedProjectsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected projects'**
+  String get selectedProjectsLabel;
+
+  /// No description provided for @selectAllVisible.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all visible'**
+  String get selectAllVisible;
+
+  /// No description provided for @clearSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear selection'**
+  String get clearSelection;
+
+  /// No description provided for @includeInBatchCleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Include in batch cleanup'**
+  String get includeInBatchCleanup;
+
+  /// No description provided for @batchCleanupHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan and apply will run across {count} selected project(s).'**
+  String batchCleanupHint(int count);
+
   /// No description provided for @selectProjectForDetails.
   ///
   /// In en, this message translates to:

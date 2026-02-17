@@ -36,6 +36,7 @@ class AppController extends ChangeNotifier {
   ScanResult? _scanResult;
   String? _scanLogPath;
   String? _selectedProjectRoot;
+  final Set<String> _selectedProjectRoots = <String>{};
   final Map<String, Set<String>> _selectedTargetsByProject =
       <String, Set<String>>{};
 
@@ -83,6 +84,8 @@ class AppController extends ChangeNotifier {
   List<ProjectScanResult> get projects =>
       _scanResult?.projects ?? const <ProjectScanResult>[];
   String? get selectedProjectRoot => _selectedProjectRoot;
+  Set<String> get selectedProjectRoots =>
+      Set<String>.unmodifiable(_selectedProjectRoots);
   CleanupPlan? get currentPlan => _currentPlan;
   CleanupResult? get lastCleanupResult => _lastCleanupResult;
   String? get cleanupLogPath => _cleanupLogPath;
@@ -128,8 +131,12 @@ class AppController extends ChangeNotifier {
   Set<String> selectedTargetIdsForSelectedProject() {
     final root = _selectedProjectRoot;
     if (root == null) return const <String>{};
+    return selectedTargetIdsForProject(root);
+  }
+
+  Set<String> selectedTargetIdsForProject(String projectRoot) {
     return Set<String>.unmodifiable(
-      _selectedTargetsByProject[root] ?? <String>{},
+      _selectedTargetsByProject[projectRoot] ?? <String>{},
     );
   }
 
@@ -201,8 +208,57 @@ class AppController extends ChangeNotifier {
   }
 
   void selectProject(String projectRoot) {
-    if (_selectedProjectRoot == projectRoot) return;
-    _selectedProjectRoot = projectRoot;
+    var changed = false;
+    if (_selectedProjectRoot != projectRoot) {
+      _selectedProjectRoot = projectRoot;
+      changed = true;
+    }
+    if (_selectedProjectRoots.add(projectRoot)) {
+      changed = true;
+    }
+    if (!changed) return;
+    _currentPlan = null;
+    notifyListeners();
+  }
+
+  void toggleProjectSelection(String projectRoot, bool selected) {
+    var changed = false;
+    if (selected) {
+      changed = _selectedProjectRoots.add(projectRoot);
+      _selectedProjectRoot ??= projectRoot;
+    } else {
+      changed = _selectedProjectRoots.remove(projectRoot);
+      if (_selectedProjectRoot == projectRoot) {
+        _selectedProjectRoot = _selectedProjectRoots.isEmpty
+            ? null
+            : _selectedProjectRoots.first;
+      }
+    }
+    if (!changed) return;
+    _currentPlan = null;
+    notifyListeners();
+  }
+
+  void selectAllProjects(Iterable<String> projectRoots) {
+    var changed = false;
+    for (final root in projectRoots) {
+      if (_selectedProjectRoots.add(root)) {
+        changed = true;
+      }
+    }
+    if (_selectedProjectRoot == null && _selectedProjectRoots.isNotEmpty) {
+      _selectedProjectRoot = _selectedProjectRoots.first;
+      changed = true;
+    }
+    if (!changed) return;
+    _currentPlan = null;
+    notifyListeners();
+  }
+
+  void clearProjectSelection() {
+    if (_selectedProjectRoots.isEmpty) return;
+    _selectedProjectRoots.clear();
+    _selectedProjectRoot = null;
     _currentPlan = null;
     notifyListeners();
   }
@@ -210,13 +266,21 @@ class AppController extends ChangeNotifier {
   void toggleProjectTargetSelection(String targetId, bool selected) {
     final root = _selectedProjectRoot;
     if (root == null) return;
-    final current = _selectedTargetsByProject[root] ?? <String>{};
+    toggleProjectTargetSelectionForProject(root, targetId, selected);
+  }
+
+  void toggleProjectTargetSelectionForProject(
+    String projectRoot,
+    String targetId,
+    bool selected,
+  ) {
+    final current = _selectedTargetsByProject[projectRoot] ?? <String>{};
     if (selected) {
       current.add(targetId);
     } else {
       current.remove(targetId);
     }
-    _selectedTargetsByProject[root] = current;
+    _selectedTargetsByProject[projectRoot] = current;
     _currentPlan = null;
     notifyListeners();
   }
@@ -286,28 +350,57 @@ class AppController extends ChangeNotifier {
 
   void previewPlanForSelectedProject() {
     _clearError();
-    final scan = _scanResult;
     final project = selectedProject;
-    if (scan == null || project == null) {
+    if (project == null) {
       _setError('No project selected.');
       return;
     }
-    final selectedIds =
-        _selectedTargetsByProject[project.rootPath] ?? <String>{};
+    _selectedProjectRoots
+      ..clear()
+      ..add(project.rootPath);
+    previewPlanForSelectedProjects();
+  }
 
-    final singleProjectScan = ScanResult(
+  void previewPlanForSelectedProjects() {
+    _clearError();
+    final scan = _scanResult;
+    if (scan == null) {
+      _setError('No scan result available.');
+      return;
+    }
+    if (_selectedProjectRoots.isEmpty) {
+      _setError('Select at least one project for cleanup.');
+      return;
+    }
+
+    final selectedProjects = scan.projects
+        .where((project) => _selectedProjectRoots.contains(project.rootPath))
+        .toList(growable: false);
+    if (selectedProjects.isEmpty) {
+      _setError('Selected projects are not available in the current scan.');
+      return;
+    }
+
+    final selectedTargetIds = <String>{};
+    for (final project in selectedProjects) {
+      selectedTargetIds.addAll(
+        _selectedTargetsByProject[project.rootPath] ?? const <String>{},
+      );
+    }
+
+    final selectedProjectScan = ScanResult(
       startedAt: scan.startedAt,
       finishedAt: scan.finishedAt,
       profile: scan.profile,
       cancelled: scan.cancelled,
-      projects: <ProjectScanResult>[project],
+      projects: selectedProjects,
     );
 
     try {
       _currentPlan = _cleanupPlanner.createPlan(
-        scan: singleProjectScan,
+        scan: selectedProjectScan,
         deleteMode: _deleteMode,
-        targetIds: selectedIds,
+        targetIds: selectedTargetIds,
         allowUnknown: _allowUnknown,
       );
       notifyListeners();
@@ -739,24 +832,48 @@ class AppController extends ChangeNotifier {
   }
 
   void _initProjectSelection(ScanResult scan) {
-    _selectedTargetsByProject.clear();
+    final previousSelection = Set<String>.from(_selectedProjectRoots);
+    _selectedTargetsByProject.removeWhere(
+      (projectRoot, _) =>
+          !scan.projects.any((project) => project.rootPath == projectRoot),
+    );
     for (final project in scan.projects) {
-      final existingIds = project.targets
-          .where((target) => target.exists)
-          .map((target) => target.targetId)
-          .toSet();
-      _selectedTargetsByProject[project.rootPath] = existingIds;
+      _selectedTargetsByProject.putIfAbsent(
+        project.rootPath,
+        () => project.targets
+            .where((target) => target.exists)
+            .map((target) => target.targetId)
+            .toSet(),
+      );
+    }
+
+    _selectedProjectRoots
+      ..clear()
+      ..addAll(
+        previousSelection.where(
+          (root) => scan.projects.any((project) => project.rootPath == root),
+        ),
+      );
+
+    if (_selectedProjectRoot != null &&
+        !scan.projects.any(
+          (project) => project.rootPath == _selectedProjectRoot,
+        )) {
+      _selectedProjectRoot = null;
     }
 
     if (scan.projects.isEmpty) {
       _selectedProjectRoot = null;
       return;
     }
-    if (_selectedProjectRoot != null &&
-        scan.projects.any((p) => p.rootPath == _selectedProjectRoot)) {
-      return;
+
+    _selectedProjectRoot ??= _selectedProjectRoots.isEmpty
+        ? scan.projects.first.rootPath
+        : _selectedProjectRoots.first;
+
+    if (_selectedProjectRoot != null) {
+      _selectedProjectRoots.add(_selectedProjectRoot!);
     }
-    _selectedProjectRoot = scan.projects.first.rootPath;
   }
 
   void _clearError() {
