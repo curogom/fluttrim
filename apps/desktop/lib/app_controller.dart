@@ -223,6 +223,12 @@ class AppController extends ChangeNotifier {
 
   Future<void> scanNow() async {
     if (_isScanning) return;
+    final activeRoots = _roots.where((root) => root.trim().isNotEmpty).toList();
+    if (activeRoots.isEmpty) {
+      _setError('No scan roots configured. Add at least one root in Settings.');
+      return;
+    }
+
     _clearError();
     _isScanning = true;
     _statusMessage = null;
@@ -233,7 +239,7 @@ class AppController extends ChangeNotifier {
 
     try {
       final request = ScanRequest(
-        roots: _roots,
+        roots: activeRoots,
         profile: _profile,
         includeGlobal: false,
         maxDepth: 5,
@@ -766,7 +772,7 @@ class AppController extends ChangeNotifier {
 List<String> _buildInitialRoots() {
   final home = _resolveHomePath();
   if (home == null || home.isEmpty) {
-    return <String>[Directory.current.path];
+    return const <String>[];
   }
 
   final candidates = <String>[
@@ -785,15 +791,7 @@ List<String> _buildInitialRoots() {
     }
   }
 
-  if (existing.isNotEmpty) {
-    return existing;
-  }
-
-  if (Directory(home).existsSync()) {
-    return <String>[home];
-  }
-
-  return <String>[Directory.current.path];
+  return existing;
 }
 
 String? _resolveHomePath() {

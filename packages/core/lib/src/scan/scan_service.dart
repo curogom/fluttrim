@@ -44,7 +44,7 @@ class ScanService {
         for (final root in request.roots) {
           token.throwIfCancelled();
           final dir = Directory(root);
-          if (!await dir.exists()) {
+          if (!await _safeExistsDirectory(dir)) {
             controller.add(
               ScanEvent.discovering(
                 message: 'Root does not exist, skipping.',
@@ -197,6 +197,15 @@ class ScanService {
         }
       } on CancelledException {
         cancelled = true;
+      } on FileSystemException catch (e) {
+        controller.add(
+          ScanEvent.discovering(
+            message: 'File system access error: ${e.message}',
+            currentPath: e.path,
+          ),
+        );
+      } catch (e) {
+        controller.add(ScanEvent.discovering(message: 'Scan failed: $e'));
       } finally {
         final finishedAt = DateTime.now().toUtc();
         controller.add(
@@ -239,47 +248,58 @@ Future<List<TargetScanResult>> _scanXcodeTargets({
 
   final results = <TargetScanResult>[];
   final target = xcodeTargets.first;
-  await for (final entity in derivedDataRoot.list(followLinks: false)) {
-    token.throwIfCancelled();
-    if (entity is! Directory) {
-      continue;
+  Stream<FileSystemEntity> entries;
+  try {
+    entries = derivedDataRoot.list(followLinks: false);
+  } on FileSystemException {
+    return const <TargetScanResult>[];
+  }
+
+  try {
+    await for (final entity in entries) {
+      token.throwIfCancelled();
+      if (entity is! Directory) {
+        continue;
+      }
+      if (exclude.matches(entity.path)) {
+        continue;
+      }
+
+      onEvent(
+        ScanEvent.sizing(
+          message: 'Sizing Xcode DerivedData: ${p.basename(entity.path)}',
+          currentPath: entity.path,
+        ),
+      );
+
+      final (exists, sizeBytes, error) = await _scanTarget(
+        target: target,
+        absolutePath: entity.path,
+        computeSize: request.computeSizes,
+        followSymlinks: request.followSymlinks,
+        token: token,
+        exclude: exclude,
+      );
+
+      final attribution = await attributeDerivedDataDirectory(entity);
+      results.add(
+        TargetScanResult(
+          targetId: target.id,
+          category: target.category,
+          risk: target.risk,
+          path: p.normalize(entity.path),
+          exists: exists,
+          sizeBytes: sizeBytes,
+          attributionStatus: attribution.status,
+          attributedProjectRootPath: attribution.projectRootPath,
+          attributionConfidence: attribution.confidence,
+          attributionEvidencePath: attribution.evidencePath,
+          error: error,
+        ),
+      );
     }
-    if (exclude.matches(entity.path)) {
-      continue;
-    }
-
-    onEvent(
-      ScanEvent.sizing(
-        message: 'Sizing Xcode DerivedData: ${p.basename(entity.path)}',
-        currentPath: entity.path,
-      ),
-    );
-
-    final (exists, sizeBytes, error) = await _scanTarget(
-      target: target,
-      absolutePath: entity.path,
-      computeSize: request.computeSizes,
-      followSymlinks: request.followSymlinks,
-      token: token,
-      exclude: exclude,
-    );
-
-    final attribution = await attributeDerivedDataDirectory(entity);
-    results.add(
-      TargetScanResult(
-        targetId: target.id,
-        category: target.category,
-        risk: target.risk,
-        path: p.normalize(entity.path),
-        exists: exists,
-        sizeBytes: sizeBytes,
-        attributionStatus: attribution.status,
-        attributedProjectRootPath: attribution.projectRootPath,
-        attributionConfidence: attribution.confidence,
-        attributionEvidencePath: attribution.evidencePath,
-        error: error,
-      ),
-    );
+  } on FileSystemException {
+    // Ignore inaccessible DerivedData children and keep partial results.
   }
 
   results.sort((a, b) => b.sizeBytes.compareTo(a.sizeBytes));
@@ -339,35 +359,43 @@ Future<void> _discoverUnder(
     return;
   }
 
-  await for (final entity in entries) {
-    token.throwIfCancelled();
-    if (entity is! Directory) continue;
-    await _discoverUnder(
-      entity,
-      depth: depth + 1,
-      request: request,
-      exclude: exclude,
-      token: token,
-      onProject: onProject,
-      onEvent: onEvent,
-    );
+  try {
+    await for (final entity in entries) {
+      token.throwIfCancelled();
+      if (entity is! Directory) continue;
+      await _discoverUnder(
+        entity,
+        depth: depth + 1,
+        request: request,
+        exclude: exclude,
+        token: token,
+        onProject: onProject,
+        onEvent: onEvent,
+      );
+    }
+  } on FileSystemException {
+    return;
   }
 }
 
 Future<bool> _isFlutterProjectRoot(String dirPath) async {
-  final pubspec = File(p.join(dirPath, 'pubspec.yaml'));
-  if (!await pubspec.exists()) return false;
+  try {
+    final pubspec = File(p.join(dirPath, 'pubspec.yaml'));
+    if (!await pubspec.exists()) return false;
 
-  final metadata = File(p.join(dirPath, '.metadata'));
-  if (await metadata.exists()) return true;
+    final metadata = File(p.join(dirPath, '.metadata'));
+    if (await metadata.exists()) return true;
 
-  final iosDir = Directory(p.join(dirPath, 'ios'));
-  if (await iosDir.exists()) return true;
+    final iosDir = Directory(p.join(dirPath, 'ios'));
+    if (await iosDir.exists()) return true;
 
-  final androidDir = Directory(p.join(dirPath, 'android'));
-  if (await androidDir.exists()) return true;
+    final androidDir = Directory(p.join(dirPath, 'android'));
+    if (await androidDir.exists()) return true;
 
-  return false;
+    return false;
+  } on FileSystemException {
+    return false;
+  }
 }
 
 Future<String?> _readPubspecName(Directory projectRoot) async {
@@ -443,21 +471,34 @@ Future<int> _directorySize(
       continue;
     }
 
-    await for (final entity in entries) {
-      token.throwIfCancelled();
-      if (exclude.matches(entity.path)) continue;
-      if (entity is Link && !followSymlinks) continue;
-      if (entity is File) {
-        try {
-          sum += await entity.length();
-        } on FileSystemException {
-          // ignore unreadable file
+    try {
+      await for (final entity in entries) {
+        token.throwIfCancelled();
+        if (exclude.matches(entity.path)) continue;
+        if (entity is Link && !followSymlinks) continue;
+        if (entity is File) {
+          try {
+            sum += await entity.length();
+          } on FileSystemException {
+            // ignore unreadable file
+          }
+        } else if (entity is Directory) {
+          stack.add(entity);
         }
-      } else if (entity is Directory) {
-        stack.add(entity);
       }
+    } on FileSystemException {
+      // ignore unreadable directory traversal errors
+      continue;
     }
   }
 
   return sum;
+}
+
+Future<bool> _safeExistsDirectory(Directory directory) async {
+  try {
+    return await directory.exists();
+  } on FileSystemException {
+    return false;
+  }
 }

@@ -122,6 +122,49 @@ void main() {
       expect(done.projects.map((p) => p.name).toSet(), {'keepme'});
     });
 
+    test(
+      'ignores unreadable directories without crashing scan',
+      () async {
+        final blocked = Directory(p.join(tempDir.path, 'blocked'));
+        await blocked.create(recursive: true);
+        await File(p.join(blocked.path, 'note.txt')).writeAsString('secret');
+
+        await _createFlutterProject(
+          tempDir,
+          dirName: 'readable_project',
+          pubspecName: 'readable_project',
+          withMetadata: true,
+        );
+
+        final chmodResult = await Process.run('chmod', ['000', blocked.path]);
+        if (chmodResult.exitCode != 0) {
+          return;
+        }
+
+        try {
+          final service = ScanService();
+          final events = await service
+              .scan(
+                ScanRequest(
+                  roots: [tempDir.path],
+                  profile: Profile.safe,
+                  computeSizes: false,
+                ),
+              )
+              .toList();
+          final done = events.lastWhere((e) => e.isDone).result!;
+
+          expect(done.cancelled, isFalse);
+          expect(done.projects.map((p) => p.name).toSet(), {
+            'readable_project',
+          });
+        } finally {
+          await Process.run('chmod', ['700', blocked.path]);
+        }
+      },
+      skip: Platform.isWindows,
+    );
+
     test('computes SAFE target sizes', () async {
       final project = await _createFlutterProject(
         tempDir,
