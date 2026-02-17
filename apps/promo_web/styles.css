@@ -34,6 +34,12 @@ a {
   margin: 0 auto;
 }
 
+main {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(80px, 9vw, 132px);
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -92,7 +98,7 @@ a {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
   gap: 24px;
-  padding: 40px 0 20px;
+  padding: 48px 0 28px;
 }
 
 .eyebrow {
@@ -157,6 +163,41 @@ h1 {
   font-size: 0.88rem;
   border: 1px solid rgba(135, 168, 198, 0.28);
   color: var(--text-1);
+}
+
+.hero-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.screen-kicker {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.screen-card {
+  margin: 0;
+  background: rgba(11, 22, 40, 0.84);
+  border: 1px solid rgba(87, 199, 255, 0.32);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 56px rgba(0, 0, 0, 0.38);
+}
+
+.screen-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.screen-card figcaption {
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  color: var(--text-1);
+  border-top: 1px solid rgba(135, 168, 198, 0.18);
 }
 
 .panel-shell {
@@ -239,12 +280,47 @@ code {
 }
 
 section {
-  margin-top: 56px;
+  margin-top: 0;
 }
 
 h2 {
   font-size: clamp(1.45rem, 2.3vw, 2.2rem);
   margin: 0 0 14px;
+}
+
+.section-head p {
+  margin: 0 0 14px;
+  color: var(--text-1);
+  line-height: 1.65;
+  max-width: 72ch;
+}
+
+.screenshot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.screenshot-card {
+  margin: 0;
+  background: rgba(11, 22, 40, 0.84);
+  border: 1px solid rgba(87, 199, 255, 0.24);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.screenshot-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.screenshot-card figcaption {
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  color: var(--text-1);
+  border-top: 1px solid rgba(135, 168, 198, 0.14);
+  line-height: 1.5;
 }
 
 .feature-grid {
@@ -254,6 +330,8 @@ h2 {
 }
 
 .feature-grid article,
+.gui-step,
+.cli-card,
 .stat-card,
 .cta-panel {
   background: var(--panel);
@@ -267,6 +345,87 @@ h2 {
   flex-direction: column;
   gap: 8px;
   min-height: 146px;
+}
+
+.gui-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.gui-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 150px;
+}
+
+.gui-step h3,
+.gui-step p {
+  margin: 0;
+}
+
+.gui-step p {
+  color: var(--text-1);
+  line-height: 1.6;
+}
+
+.step-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(105, 231, 190, 0.45);
+  background: rgba(105, 231, 190, 0.15);
+  color: var(--secondary);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.gui-link {
+  margin-top: 14px;
+}
+
+.cli-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.cli-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cli-card h3 {
+  margin: 0;
+}
+
+.cli-card pre {
+  margin: 0;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(87, 199, 255, 0.24);
+  background: rgba(6, 15, 30, 0.82);
+  overflow-x: auto;
+}
+
+.cli-card code {
+  margin: 0;
+  color: #b8daf8;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.cli-actions {
+  margin-top: 14px;
+}
+
+.cli-note {
+  margin-top: 10px;
 }
 
 .feature-grid h3,
@@ -439,9 +598,16 @@ h2 {
 }
 
 @media (max-width: 920px) {
+  main {
+    gap: clamp(56px, 12vw, 84px);
+  }
+
   .hero,
   .split,
   .feature-grid,
+  .screenshot-grid,
+  .gui-grid,
+  .cli-grid,
   .oss-grid {
     grid-template-columns: 1fr;
   }

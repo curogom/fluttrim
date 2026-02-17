@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting...</title>
+  </head>
+  <body>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get("lang") || localStorage.getItem("fluttrim_docs_lang") || "en";
+      window.location.replace('/docs/viewer.html?doc=gui-usage&lang=' + encodeURIComponent(lang));
+    </script>
+  </body>
+</html>

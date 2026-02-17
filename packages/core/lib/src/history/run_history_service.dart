@@ -6,11 +6,17 @@ import 'package:path/path.dart' as p;
 import '../logs/run_log_writer.dart';
 import '../models/history_entry.dart';
 
+/// Reads and summarizes scan/cleanup JSON log history.
 class RunHistoryService {
+  /// Creates a run history service.
+  ///
+  /// When [baseDir] is omitted, [defaultRunLogDir] is used.
   const RunHistoryService({this.baseDir});
 
+  /// Optional base directory for run log files.
   final String? baseDir;
 
+  /// Lists recent run entries sorted by timestamp (desc).
   Future<List<RunHistoryEntry>> listRuns({int limit = 100}) async {
     if (limit <= 0) {
       return const <RunHistoryEntry>[];

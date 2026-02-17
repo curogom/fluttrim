@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:glob/glob.dart';
+import 'package:glob/list_local_fs.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
@@ -16,9 +18,14 @@ import '../xcode/derived_data_attribution.dart';
 import '../xcode/xcode_cache_paths.dart';
 import 'exclude_matcher.dart';
 
+/// Discovers Flutter projects and computes cache-target scan results.
 class ScanService {
+  /// Creates a scan service.
   const ScanService();
 
+  /// Runs a scan and emits incremental [ScanEvent] updates.
+  ///
+  /// The final stream event is always [ScanPhase.done] carrying [ScanResult].
   Stream<ScanEvent> scan(
     ScanRequest request, {
     CancellationToken? cancellationToken,
@@ -36,6 +43,7 @@ class ScanService {
       try {
         final exclude = ExcludeMatcher(request.exclusions);
         final projectRoots = <Directory>[];
+        final workspaceCache = _MelosWorkspaceCache();
 
         controller.add(
           ScanEvent.discovering(message: 'Discovering Flutter projects...'),
@@ -43,7 +51,7 @@ class ScanService {
 
         for (final root in request.roots) {
           token.throwIfCancelled();
-          final dir = Directory(root);
+          final dir = Directory(root).absolute;
           if (!await _safeExistsDirectory(dir)) {
             controller.add(
               ScanEvent.discovering(
@@ -53,12 +61,15 @@ class ScanService {
             );
             continue;
           }
+          final workspace = await workspaceCache.resolveForPath(dir.path);
           await _discoverUnder(
             dir,
             depth: 0,
             request: request,
             exclude: exclude,
             token: token,
+            workspace: workspace,
+            workspaceCache: workspaceCache,
             onProject: projectRoots.add,
             onEvent: controller.add,
           );
@@ -322,12 +333,213 @@ const _pruneDirNames = <String>{
 typedef _OnProject = void Function(Directory projectRoot);
 typedef _OnEvent = void Function(ScanEvent event);
 
+Future<bool> _shouldTraversePath(
+  String dirPath,
+  _MelosWorkspace? workspace,
+) async {
+  if (!_hasPackagesSegment(dirPath)) {
+    final resolvedPath = await _resolveSymlinkTargetPath(dirPath);
+    if (resolvedPath == null || !_hasPackagesSegment(resolvedPath)) {
+      return true;
+    }
+    return workspace?.allowsPackagesPath(resolvedPath) == true;
+  }
+  return workspace?.allowsPackagesPath(dirPath) == true;
+}
+
+Future<String?> _resolveSymlinkTargetPath(String path) async {
+  final type = await FileSystemEntity.type(path, followLinks: false);
+  if (type != FileSystemEntityType.link) {
+    return null;
+  }
+  try {
+    return p.normalize(Directory(path).resolveSymbolicLinksSync());
+  } on FileSystemException {
+    return null;
+  }
+}
+
+bool _hasPackagesSegment(String path) {
+  final normalized = path.trim().replaceAll('\\', '/');
+  if (normalized.isEmpty) return false;
+  return RegExp(
+    r'(^|/)packages(/|$)',
+    caseSensitive: !Platform.isWindows,
+  ).hasMatch(normalized);
+}
+
+class _MelosWorkspace {
+  const _MelosWorkspace({required this.packageRoots});
+
+  final Set<String> packageRoots;
+
+  bool allowsPackagesPath(String dirPath) {
+    for (final packageRoot in packageRoots) {
+      if (_pathHierarchyOverlaps(dirPath, packageRoot)) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+class _MelosWorkspaceCache {
+  final Map<String, Future<_MelosWorkspace?>> _workspaceByRootPath = {};
+  final Map<String, Future<_MelosWorkspace?>> _workspaceByLookupPath = {};
+
+  Future<_MelosWorkspace?> resolveForPath(String path) {
+    final normalized = p.normalize(path);
+    return _workspaceByLookupPath.putIfAbsent(normalized, () async {
+      var current = Directory(normalized).absolute.path;
+      while (true) {
+        final workspace = await resolveAtPath(current);
+        if (workspace != null) {
+          return workspace;
+        }
+        final parent = Directory(current).parent.path;
+        if (parent == current) {
+          break;
+        }
+        current = parent;
+      }
+      return null;
+    });
+  }
+
+  Future<_MelosWorkspace?> resolveAtPath(String path) {
+    final normalized = p.normalize(path);
+    return _workspaceByRootPath.putIfAbsent(
+      normalized,
+      () => _loadMelosWorkspaceAt(normalized),
+    );
+  }
+}
+
+Future<_MelosWorkspace?> _loadMelosWorkspaceAt(String workspaceRootPath) async {
+  final melosFile = await _findMelosConfigFile(workspaceRootPath);
+  if (melosFile == null) {
+    return null;
+  }
+
+  try {
+    final yamlText = await melosFile.readAsString();
+    final decoded = loadYaml(yamlText);
+    final yaml = decoded is YamlMap ? decoded : null;
+
+    final rawPackagePatterns = _readYamlStringList(yaml?['packages']);
+    final packagePatterns = rawPackagePatterns.isEmpty
+        ? const <String>['packages/**']
+        : rawPackagePatterns;
+    final ignorePatterns = _readYamlStringList(yaml?['ignore']);
+
+    final packageRoots = await _resolveMelosPackageRoots(
+      workspaceRootPath: workspaceRootPath,
+      patterns: packagePatterns,
+    );
+    if (ignorePatterns.isNotEmpty) {
+      final ignoredPackageRoots = await _resolveMelosPackageRoots(
+        workspaceRootPath: workspaceRootPath,
+        patterns: ignorePatterns,
+      );
+      packageRoots.removeAll(ignoredPackageRoots);
+    }
+    return _MelosWorkspace(packageRoots: packageRoots);
+  } on Exception {
+    return null;
+  }
+}
+
+Future<File?> _findMelosConfigFile(String rootPath) async {
+  final yaml = File(p.join(rootPath, 'melos.yaml'));
+  if (await yaml.exists()) {
+    return yaml;
+  }
+  final yml = File(p.join(rootPath, 'melos.yml'));
+  if (await yml.exists()) {
+    return yml;
+  }
+  return null;
+}
+
+List<String> _readYamlStringList(Object? raw) {
+  if (raw is! List) {
+    return const <String>[];
+  }
+  return raw
+      .whereType<String>()
+      .map((value) => value.trim())
+      .where((value) => value.isNotEmpty)
+      .toList(growable: false);
+}
+
+Future<Set<String>> _resolveMelosPackageRoots({
+  required String workspaceRootPath,
+  required List<String> patterns,
+}) async {
+  final packageRoots = <String>{};
+  final root = Directory(workspaceRootPath).absolute.path;
+
+  for (final pattern in patterns) {
+    final globPattern = _toPubspecGlobPattern(pattern);
+    Glob glob;
+    try {
+      glob = Glob(globPattern);
+    } on FormatException {
+      continue;
+    }
+    await for (final entry in glob.list(root: root, followLinks: false)) {
+      if (entry is! File) {
+        continue;
+      }
+      packageRoots.add(p.normalize(entry.parent.absolute.path));
+    }
+  }
+  return packageRoots;
+}
+
+String _toPubspecGlobPattern(String pattern) {
+  var normalized = pattern.trim().replaceAll('\\', '/');
+  while (normalized.endsWith('/')) {
+    normalized = normalized.substring(0, normalized.length - 1);
+  }
+  if (normalized.isEmpty) {
+    return 'pubspec.yaml';
+  }
+  if (normalized.endsWith('pubspec.yaml')) {
+    return normalized;
+  }
+  return '$normalized/pubspec.yaml';
+}
+
+bool _pathHierarchyOverlaps(String left, String right) {
+  return _isSameOrWithin(left, right) || _isSameOrWithin(right, left);
+}
+
+bool _isSameOrWithin(String path, String ancestor) {
+  final normalizedPath = _normalizePathForComparison(path);
+  final normalizedAncestor = _normalizePathForComparison(ancestor);
+  if (normalizedPath == normalizedAncestor) {
+    return true;
+  }
+  return p.isWithin(normalizedAncestor, normalizedPath);
+}
+
+String _normalizePathForComparison(String path) {
+  final normalized = p.normalize(path);
+  if (Platform.isWindows) {
+    return normalized.toLowerCase();
+  }
+  return normalized;
+}
+
 Future<void> _discoverUnder(
   Directory dir, {
   required int depth,
   required ScanRequest request,
   required ExcludeMatcher exclude,
   required CancellationToken token,
+  required _MelosWorkspace? workspace,
+  required _MelosWorkspaceCache workspaceCache,
   required _OnProject onProject,
   required _OnEvent onEvent,
 }) async {
@@ -335,6 +547,11 @@ Future<void> _discoverUnder(
 
   final dirPath = p.normalize(dir.path);
   if (exclude.matches(dirPath)) return;
+  final localWorkspace = await workspaceCache.resolveAtPath(dirPath);
+  final activeWorkspace = localWorkspace ?? workspace;
+  if (!await _shouldTraversePath(dirPath, activeWorkspace)) {
+    return;
+  }
 
   final base = p.basename(dirPath);
   if (_pruneDirNames.contains(base)) return;
@@ -369,6 +586,8 @@ Future<void> _discoverUnder(
         request: request,
         exclude: exclude,
         token: token,
+        workspace: activeWorkspace,
+        workspaceCache: workspaceCache,
         onProject: onProject,
         onEvent: onEvent,
       );

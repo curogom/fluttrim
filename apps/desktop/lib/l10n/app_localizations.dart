@@ -883,6 +883,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Korean'**
   String get languageKorean;
+
+  /// No description provided for @onboardingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Fluttrim'**
+  String get onboardingTitle;
+
+  /// No description provided for @onboardingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language and default scan roots to get started.'**
+  String get onboardingSubtitle;
+
+  /// No description provided for @onboardingLanguageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get onboardingLanguageTitle;
+
+  /// No description provided for @onboardingLanguageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change this later in Settings.'**
+  String get onboardingLanguageHint;
+
+  /// No description provided for @onboardingRootsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default scan roots'**
+  String get onboardingRootsTitle;
+
+  /// No description provided for @onboardingRootsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Fluttrim scans these folders for Flutter projects.'**
+  String get onboardingRootsHint;
+
+  /// No description provided for @onboardingUseHomeShortcut.
+  ///
+  /// In en, this message translates to:
+  /// **'Use home folder'**
+  String get onboardingUseHomeShortcut;
+
+  /// No description provided for @onboardingQuickShortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick shortcuts'**
+  String get onboardingQuickShortcuts;
+
+  /// No description provided for @onboardingAddRootLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Add root folder'**
+  String get onboardingAddRootLabel;
+
+  /// No description provided for @onboardingSelectedRoots.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected roots ({count})'**
+  String onboardingSelectedRoots(int count);
+
+  /// No description provided for @onboardingNoRootsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one folder to continue.'**
+  String get onboardingNoRootsSelected;
+
+  /// No description provided for @onboardingRootInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid folder path.'**
+  String get onboardingRootInvalid;
+
+  /// No description provided for @onboardingRootNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected folder does not exist.'**
+  String get onboardingRootNotFound;
+
+  /// No description provided for @onboardingRootRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one existing root folder.'**
+  String get onboardingRootRequired;
+
+  /// No description provided for @onboardingContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get onboardingContinue;
 }
 
 class _AppLocalizationsDelegate

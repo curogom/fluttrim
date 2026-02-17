@@ -66,6 +66,10 @@ void main() {
       expect(result.available, isTrue);
       expect(result.version, '3.2.1');
       expect(result.installedSdks.length, 2);
+      expect(result.installedSdks.map((sdk) => sdk.name).toList(), [
+        '3.35.3',
+        '3.29.2',
+      ]);
 
       final sdk353 = result.installedSdks.singleWhere(
         (s) => s.name == '3.35.3',
@@ -78,6 +82,126 @@ void main() {
       );
       expect(app2.usesFvm, isTrue);
       expect(app2.installedLocally, isFalse);
+    });
+
+    test(
+      'supports pinnedVersion object shape from fvm api project output',
+      () async {
+        const fvmPath = '/usr/local/bin/fvm';
+        final service = FvmService(
+          commandRunner: _FakeCommandRunner(
+            executablePath: fvmPath,
+            handlers: {
+              const _CommandKey('--version', null): ProcessResult(
+                0,
+                0,
+                '3.2.1\n',
+                '',
+              ),
+              const _CommandKey('api list --compress', null): ProcessResult(
+                0,
+                0,
+                '''
+{"versions":[
+{"name":"3.27.4","directory":"/fvm/3.27.4","type":"release","isSetup":true}
+]}
+''',
+                '',
+              ),
+              const _CommandKey(
+                'api project --compress',
+                '/repo/app_obj',
+              ): ProcessResult(0, 0, '''
+{"project":{
+  "name":"app_obj",
+  "isFlutter":true,
+  "hasConfig":true,
+  "pinnedVersion":{"name":"3.27.4","type":"release"}
+}}
+''', ''),
+              const _CommandKey(
+                'api project --compress',
+                '/repo/app_cfg',
+              ): ProcessResult(0, 0, '''
+{"project":{
+  "name":"app_cfg",
+  "isFlutter":true,
+  "hasConfig":true,
+  "config":{"flutter":"3.27.4"}
+}}
+''', ''),
+            },
+          ),
+        );
+
+        final result = await service.inspect(
+          projectRoots: const ['/repo/app_obj', '/repo/app_cfg'],
+        );
+
+        final appObj = result.projectUsages.singleWhere(
+          (p) => p.projectName == 'app_obj',
+        );
+        expect(appObj.pinnedVersion, '3.27.4');
+        expect(appObj.installedLocally, isTrue);
+
+        final appCfg = result.projectUsages.singleWhere(
+          (p) => p.projectName == 'app_cfg',
+        );
+        expect(appCfg.pinnedVersion, '3.27.4');
+        expect(appCfg.installedLocally, isTrue);
+
+        final sdk = result.installedSdks.singleWhere((s) => s.name == '3.27.4');
+        expect(sdk.usedByProjectRoots.toSet(), {
+          '/repo/app_obj',
+          '/repo/app_cfg',
+        });
+      },
+    );
+
+    test('skips ambiguous projects without explicit FVM config', () async {
+      const fvmPath = '/usr/local/bin/fvm';
+      final service = FvmService(
+        commandRunner: _FakeCommandRunner(
+          executablePath: fvmPath,
+          handlers: {
+            const _CommandKey('--version', null): ProcessResult(
+              0,
+              0,
+              '3.2.1\n',
+              '',
+            ),
+            const _CommandKey('api list --compress', null): ProcessResult(
+              0,
+              0,
+              '''
+{"versions":[
+{"name":"3.41.1","directory":"/fvm/3.41.1","type":"release","isSetup":true}
+]}
+''',
+              '',
+            ),
+            const _CommandKey(
+              'api project --compress',
+              '/repo/app_no_config',
+            ): ProcessResult(0, 0, '''
+{"project":{
+  "name":"app_no_config",
+  "isFlutter":true,
+  "hasConfig":false,
+  "pinnedVersion":null,
+  "dartToolVersion":"3.41.1"
+}}
+''', ''),
+          },
+        ),
+      );
+
+      final result = await service.inspect(
+        projectRoots: const ['/repo/app_no_config'],
+      );
+      final sdk = result.installedSdks.singleWhere((s) => s.name == '3.41.1');
+      expect(sdk.usedByProjectRoots, isEmpty);
+      expect(result.projectUsages, isEmpty);
     });
 
     test('removeSdk returns success when fvm remove exits with zero', () async {

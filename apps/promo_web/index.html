@@ -51,9 +51,6 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="ambient ambient-a" aria-hidden="true"></div>
-    <div class="ambient ambient-b" aria-hidden="true"></div>
-
     <header class="topbar">
       <div class="brand">
         <img
@@ -93,25 +90,19 @@
           </ul>
         </div>
         <div class="hero-panel">
-          <div class="panel-shell">
-            <div class="panel-top">
-              <span class="dot red"></span>
-              <span class="dot amber"></span>
-              <span class="dot green"></span>
-            </div>
-            <div class="panel-content">
-              <div class="metric">
-                <span data-i18n="metric_reclaimable">Total Reclaimable</span>
-                <strong>12.4 GB</strong>
-              </div>
-              <div class="bars">
-                <div><label>DerivedData</label><i style="--w: 82%"></i></div>
-                <div><label>Pub Cache</label><i style="--w: 63%"></i></div>
-                <div><label>Gradle</label><i style="--w: 48%"></i></div>
-              </div>
-              <code>Preview first · Trash by default · Guardrails always on</code>
-            </div>
-          </div>
+          <p class="screen-kicker" data-i18n="hero_screen_label">Actual desktop capture (current build)</p>
+          <figure class="screen-card">
+            <img
+              src="./assets/screenshot-dashboard.png"
+              alt="Fluttrim dashboard with navigation rail and project metrics"
+              width="1728"
+              height="1117"
+              loading="eager"
+            />
+            <figcaption data-i18n="hero_screen_note">
+              Dashboard tab after launch. Same UI shipped in desktop release binaries.
+            </figcaption>
+          </figure>
         </div>
       </section>
 
@@ -145,6 +136,123 @@
         </div>
       </section>
 
+      <section id="screens" class="container screenshot-section">
+        <div class="section-head">
+          <h2 data-i18n="screens_title">Actual GUI captures</h2>
+          <p data-i18n="screens_body">
+            Real screenshots from the current desktop build, not mock illustrations.
+          </p>
+        </div>
+        <div class="screenshot-grid">
+          <figure class="screenshot-card">
+            <img
+              src="./assets/screenshot-onboarding.png"
+              alt="Fluttrim onboarding page for language and scan root selection"
+              width="1728"
+              height="1117"
+              loading="lazy"
+            />
+            <figcaption data-i18n="screen_onboarding_caption">
+              Onboarding: language selection and initial scan root configuration.
+            </figcaption>
+          </figure>
+          <figure class="screenshot-card">
+            <img
+              src="./assets/screenshot-dashboard.png"
+              alt="Fluttrim dashboard page showing reclaimable bytes and logs"
+              width="1728"
+              height="1117"
+              loading="lazy"
+            />
+            <figcaption data-i18n="screen_dashboard_caption">
+              Dashboard: reclaimable totals, scan status, and recent run logs.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="gui-guide" class="container gui-guide">
+        <div class="section-head">
+          <h2 data-i18n="gui_title">Understand the GUI in one pass</h2>
+          <p data-i18n="gui_body">
+            Follow the typical flow from onboarding to safe apply before your first cleanup.
+          </p>
+        </div>
+        <div class="gui-grid">
+          <article class="gui-step">
+            <span class="step-chip">1</span>
+            <h3 data-i18n="gui_step_1_title">Onboarding</h3>
+            <p data-i18n="gui_step_1_body">
+              Choose language and set scan roots with a home-folder shortcut.
+            </p>
+          </article>
+          <article class="gui-step">
+            <span class="step-chip">2</span>
+            <h3 data-i18n="gui_step_2_title">Scan</h3>
+            <p data-i18n="gui_step_2_body">
+              Run SAFE profile first and review reclaimable totals and permission warnings.
+            </p>
+          </article>
+          <article class="gui-step">
+            <span class="step-chip">3</span>
+            <h3 data-i18n="gui_step_3_title">Preview plan</h3>
+            <p data-i18n="gui_step_3_body">
+              Batch-select projects, inspect explicit targets, and verify risk labels.
+            </p>
+          </article>
+          <article class="gui-step">
+            <span class="step-chip">4</span>
+            <h3 data-i18n="gui_step_4_title">Apply and verify</h3>
+            <p data-i18n="gui_step_4_body">
+              Apply cleanup with Trash-first mode, then confirm reclaimed bytes in history.
+            </p>
+          </article>
+        </div>
+        <a class="btn btn-ghost gui-link" href="/docs/gui-usage/" data-doc-link data-i18n="gui_cta"
+          >Open full GUI guide</a
+        >
+      </section>
+
+      <section id="cli-guide" class="container cli-kit">
+        <div class="section-head">
+          <h2 data-i18n="cli_title">CLI quick start for automation</h2>
+          <p data-i18n="cli_body">
+            Install the global `fluttrim` command from pub.dev and run the same cleanup flow in shell
+            scripts or CI jobs.
+          </p>
+        </div>
+        <div class="cli-grid">
+          <article class="cli-card">
+            <h3 data-i18n="cli_install_title">Install and verify</h3>
+            <pre><code>dart pub global activate fluttrim_cli
+fluttrim --help
+fluttrim doctor</code></pre>
+          </article>
+          <article class="cli-card">
+            <h3 data-i18n="cli_flow_title">Typical safe flow</h3>
+            <pre><code>fluttrim scan --root ~/dev --profile safe
+fluttrim plan --root ~/dev --profile safe --json
+fluttrim apply --root ~/dev --profile safe --yes</code></pre>
+          </article>
+        </div>
+        <div class="download-actions cli-actions">
+          <a
+            class="btn btn-primary"
+            href="https://pub.dev/packages/fluttrim_cli"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-i18n="cli_button_pubdev"
+            >View CLI on pub.dev</a
+          >
+          <a class="btn btn-ghost" href="/docs/readme/" data-doc-link data-i18n="cli_button_docs"
+            >Open CLI docs</a
+          >
+        </div>
+        <p class="download-note cli-note" data-i18n="cli_note">
+          CLI and GUI share one core engine, so safety rules and JSON schema stay aligned.
+        </p>
+      </section>
+
       <section class="container split">
         <div>
           <h2 data-i18n="trust_title">Safety is product behavior, not a disclaimer</h2>
@@ -173,7 +281,7 @@
             <p data-i18n="oss_readme_body">Architecture, setup, and deployment overview.</p>
             <a
               class="oss-link"
-              href="/docs/readme/"
+              href="/docs/readme/" data-doc-link
               data-i18n="oss_link_label"
               >Open document</a
             >
@@ -183,7 +291,7 @@
             <p data-i18n="oss_core_body">fluttrim_core API and publish prep guide.</p>
             <a
               class="oss-link"
-              href="/docs/core-package-docs/"
+              href="/docs/core-package-docs/" data-doc-link
               data-i18n="oss_link_label"
               >Open document</a
             >
@@ -193,7 +301,7 @@
             <p data-i18n="oss_contrib_body">PR flow, test requirements, and review expectations.</p>
             <a
               class="oss-link"
-              href="/docs/contributing/"
+              href="/docs/contributing/" data-doc-link
               data-i18n="oss_link_label"
               >Open document</a
             >
@@ -203,7 +311,7 @@
             <p data-i18n="oss_security_body">Private reporting path for vulnerabilities.</p>
             <a
               class="oss-link"
-              href="/docs/security/"
+              href="/docs/security/" data-doc-link
               data-i18n="oss_link_label"
               >Open document</a
             >
@@ -213,7 +321,7 @@
             <p data-i18n="oss_coc_body">Community behavior expectations and enforcement scope.</p>
             <a
               class="oss-link"
-              href="/docs/code-of-conduct/"
+              href="/docs/code-of-conduct/" data-doc-link
               data-i18n="oss_link_label"
               >Open document</a
             >
@@ -223,7 +331,7 @@
             <p data-i18n="oss_roadmap_body">Public priorities for v1 delivery and operations.</p>
             <a
               class="oss-link"
-              href="/docs/roadmap/"
+              href="/docs/roadmap/" data-doc-link
               data-i18n="oss_link_label"
               >Open document</a
             >
@@ -235,7 +343,7 @@
             </p>
             <a
               class="oss-link"
-              href="/docs/governance/"
+              href="/docs/governance/" data-doc-link
               data-i18n="oss_link_label"
               >Open document</a
             >
@@ -247,7 +355,7 @@
             </p>
             <a
               class="oss-link"
-              href="/docs/maintainers/"
+              href="/docs/maintainers/" data-doc-link
               data-i18n="oss_link_label"
               >Open document</a
             >
@@ -257,7 +365,7 @@
             <p data-i18n="oss_support_body">How to ask questions and report problems.</p>
             <a
               class="oss-link"
-              href="/docs/support/"
+              href="/docs/support/" data-doc-link
               data-i18n="oss_link_label"
               >Open document</a
             >
@@ -267,7 +375,7 @@
             <p data-i18n="oss_license_body">Permissive open-source license with attribution.</p>
             <a
               class="oss-link"
-              href="/docs/license/"
+              href="/docs/license/" data-doc-link
               data-i18n="oss_link_label"
               >Open document</a
             >

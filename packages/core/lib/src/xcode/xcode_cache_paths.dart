@@ -2,8 +2,12 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+/// Target id for Xcode DerivedData.
 const String xcodeDerivedDataTargetId = 'xcode.derived_data';
 
+/// Resolves Xcode DerivedData path on macOS.
+///
+/// Returns `null` for non-macOS platforms.
 String? resolveXcodeDerivedDataPath({
   Map<String, String>? environment,
   String? operatingSystem,

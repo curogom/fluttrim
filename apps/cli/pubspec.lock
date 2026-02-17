@@ -92,10 +92,11 @@ packages:
   fluttrim_core:
     dependency: "direct main"
     description:
-      path: "../../packages/core"
-      relative: true
-    source: path
-    version: "1.0.0"
+      name: fluttrim_core
+      sha256: "39edaf82104e29e5666c389c3ed953e8c0e5566a5aa941f1e77880ff720baa4e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   frontend_server_client:
     dependency: transitive
     description:

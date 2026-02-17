@@ -1,3 +1,14 @@
+/// Shared Fluttrim business logic for scan, planning, cleanup, diagnostics,
+/// and machine-readable logging.
+///
+/// Typical flow:
+/// 1. Build a [ScanRequest].
+/// 2. Run [ScanService.scan].
+/// 3. Build a [CleanupPlan] with [CleanupPlanner.createPlan].
+/// 4. Execute with [CleanupExecutor.execute].
+/// 5. Persist outputs with [RunLogWriter].
+library;
+
 export 'src/cancellation/cancellation_token.dart';
 export 'src/doctor/doctor_service.dart';
 export 'src/fvm/fvm_service.dart';

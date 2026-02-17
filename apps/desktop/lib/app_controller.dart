@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fluttrim_core/fluttrim_core.dart';
@@ -7,9 +8,6 @@ import 'package:flutter/material.dart';
 class AppController extends ChangeNotifier {
   AppController() {
     _roots = _buildInitialRoots();
-    Future<void>.microtask(refreshFvmStatus);
-    Future<void>.microtask(refreshGlobalCaches);
-    Future<void>.microtask(refreshHistory);
   }
 
   final ScanService _scanService = const ScanService();
@@ -27,6 +25,8 @@ class AppController extends ChangeNotifier {
 
   bool _isScanning = false;
   bool _isApplying = false;
+  bool _isInitialized = false;
+  bool _onboardingCompleted = false;
   String? _statusMessage;
   int? _progressDone;
   int? _progressTotal;
@@ -75,6 +75,8 @@ class AppController extends ChangeNotifier {
 
   bool get isScanning => _isScanning;
   bool get isApplying => _isApplying;
+  bool get isInitialized => _isInitialized;
+  bool get needsOnboarding => !_onboardingCompleted;
   String? get statusMessage => _statusMessage;
   int? get progressDone => _progressDone;
   int? get progressTotal => _progressTotal;
@@ -113,6 +115,9 @@ class AppController extends ChangeNotifier {
   String? get globalScanLogPath => _globalScanLogPath;
   String? get xcodeScanLogPath => _xcodeScanLogPath;
   String? get errorMessage => _errorMessage;
+  String? get homeRootPath => _resolveHomePath();
+  List<String> get onboardingRootShortcuts =>
+      _buildOnboardingRootShortcuts(homeRootPath);
 
   int get totalReclaimableBytes => _scanResult?.totalBytes ?? 0;
   int get totalReclaimedFromHistory => _historyEntries
@@ -140,10 +145,64 @@ class AppController extends ChangeNotifier {
     );
   }
 
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    final persisted = await _loadDesktopSettings();
+    if (persisted != null) {
+      _locale = persisted.locale;
+      _profile = persisted.parsedProfile;
+      _deleteMode = persisted.parsedDeleteMode;
+      _allowUnknown = persisted.allowUnknown;
+      _onboardingCompleted = persisted.onboardingCompleted;
+
+      final existingRoots = persisted.roots
+          .where((root) => Directory(root).existsSync())
+          .toList(growable: false);
+      _roots = existingRoots.isNotEmpty ? existingRoots : _buildInitialRoots();
+    } else {
+      _onboardingCompleted = false;
+      _roots = _buildInitialRoots();
+    }
+
+    _isInitialized = true;
+    notifyListeners();
+
+    Future<void>.microtask(refreshFvmStatus);
+    Future<void>.microtask(refreshGlobalCaches);
+    Future<void>.microtask(refreshHistory);
+  }
+
+  Future<bool> completeOnboarding({
+    required Locale locale,
+    required List<String> roots,
+  }) async {
+    final normalizedRoots = <String>{};
+    for (final root in roots) {
+      final normalized = _normalizeRoot(root);
+      if (normalized == null) continue;
+      if (!Directory(normalized).existsSync()) continue;
+      normalizedRoots.add(normalized);
+    }
+    if (normalizedRoots.isEmpty) {
+      return false;
+    }
+
+    _locale = locale;
+    _roots = normalizedRoots.toList(growable: false);
+    _onboardingCompleted = true;
+    notifyListeners();
+    await _saveDesktopSettings();
+    return true;
+  }
+
+  String? normalizeRootPath(String value) => _normalizeRoot(value);
+
   void setLocale(Locale locale) {
     if (_locale == locale) return;
     _locale = locale;
     notifyListeners();
+    _saveDesktopSettingsIfReady();
   }
 
   void setProfile(Profile profile) {
@@ -151,6 +210,7 @@ class AppController extends ChangeNotifier {
     _profile = profile;
     _currentPlan = null;
     notifyListeners();
+    _saveDesktopSettingsIfReady();
   }
 
   void setDeleteMode(DeleteMode mode) {
@@ -158,6 +218,7 @@ class AppController extends ChangeNotifier {
     _deleteMode = mode;
     _currentPlan = null;
     notifyListeners();
+    _saveDesktopSettingsIfReady();
   }
 
   void setAllowUnknown(bool value) {
@@ -175,6 +236,7 @@ class AppController extends ChangeNotifier {
       _xcodeCleanupPlan = null;
     }
     notifyListeners();
+    _saveDesktopSettingsIfReady();
   }
 
   void setDangerZoneConfirmed(bool value) {
@@ -197,6 +259,7 @@ class AppController extends ChangeNotifier {
     if (_roots.contains(normalized)) return;
     _roots = <String>[..._roots, normalized];
     notifyListeners();
+    _saveDesktopSettingsIfReady();
   }
 
   void removeRoot(String root) {
@@ -205,6 +268,7 @@ class AppController extends ChangeNotifier {
       _roots = _buildInitialRoots();
     }
     notifyListeners();
+    _saveDesktopSettingsIfReady();
   }
 
   void selectProject(String projectRoot) {
@@ -374,6 +438,7 @@ class AppController extends ChangeNotifier {
     }
 
     final selectedProjects = scan.projects
+        .where((project) => project.totalBytes > 0)
         .where((project) => _selectedProjectRoots.contains(project.rootPath))
         .toList(growable: false);
     if (selectedProjects.isEmpty) {
@@ -512,11 +577,13 @@ class AppController extends ChangeNotifier {
       _globalCacheTargets =
           result.globalTargets
               .where((target) => target.path.trim().isNotEmpty)
+              .where((target) => target.sizeBytes > 0)
               .toList()
             ..sort((a, b) => b.sizeBytes.compareTo(a.sizeBytes));
       _xcodeTargets =
           result.xcodeTargets
               .where((target) => target.path.trim().isNotEmpty)
+              .where((target) => target.sizeBytes > 0)
               .toList()
             ..sort((a, b) => b.sizeBytes.compareTo(a.sizeBytes));
 
@@ -743,9 +810,11 @@ class AppController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _fvmResult = await _fvmService.inspect(
-        projectRoots: projects.map((project) => project.rootPath).toList(),
-      );
+      final projectRoots = projects
+          .map((project) => project.rootPath)
+          .toSet()
+          .toList(growable: false);
+      _fvmResult = await _fvmService.inspect(projectRoots: projectRoots);
     } on Exception catch (e) {
       _setError(e.toString());
     } finally {
@@ -832,16 +901,24 @@ class AppController extends ChangeNotifier {
   }
 
   void _initProjectSelection(ScanResult scan) {
-    final previousSelection = Set<String>.from(_selectedProjectRoots);
+    final reclaimableProjects = scan.projects
+        .where((project) => project.totalBytes > 0)
+        .toList(growable: false);
+    final reclaimableRoots = reclaimableProjects
+        .map((project) => project.rootPath)
+        .toSet();
+    final previousSelection = Set<String>.from(
+      _selectedProjectRoots,
+    ).where(reclaimableRoots.contains);
+
     _selectedTargetsByProject.removeWhere(
-      (projectRoot, _) =>
-          !scan.projects.any((project) => project.rootPath == projectRoot),
+      (projectRoot, _) => !reclaimableRoots.contains(projectRoot),
     );
-    for (final project in scan.projects) {
+    for (final project in reclaimableProjects) {
       _selectedTargetsByProject.putIfAbsent(
         project.rootPath,
         () => project.targets
-            .where((target) => target.exists)
+            .where((target) => target.exists && target.sizeBytes > 0)
             .map((target) => target.targetId)
             .toSet(),
       );
@@ -849,30 +926,66 @@ class AppController extends ChangeNotifier {
 
     _selectedProjectRoots
       ..clear()
-      ..addAll(
-        previousSelection.where(
-          (root) => scan.projects.any((project) => project.rootPath == root),
-        ),
-      );
+      ..addAll(previousSelection);
 
     if (_selectedProjectRoot != null &&
-        !scan.projects.any(
-          (project) => project.rootPath == _selectedProjectRoot,
-        )) {
+        !reclaimableRoots.contains(_selectedProjectRoot)) {
       _selectedProjectRoot = null;
     }
 
-    if (scan.projects.isEmpty) {
+    if (reclaimableProjects.isEmpty) {
       _selectedProjectRoot = null;
       return;
     }
 
     _selectedProjectRoot ??= _selectedProjectRoots.isEmpty
-        ? scan.projects.first.rootPath
+        ? reclaimableProjects.first.rootPath
         : _selectedProjectRoots.first;
 
     if (_selectedProjectRoot != null) {
       _selectedProjectRoots.add(_selectedProjectRoot!);
+    }
+  }
+
+  void _saveDesktopSettingsIfReady() {
+    if (!_isInitialized) return;
+    unawaited(_saveDesktopSettings());
+  }
+
+  Future<void> _saveDesktopSettings() async {
+    try {
+      final file = File(_desktopSettingsFilePath());
+      await file.parent.create(recursive: true);
+      final settings = _DesktopSettings(
+        onboardingCompleted: _onboardingCompleted,
+        localeCode: _locale.languageCode,
+        roots: _roots,
+        profile: _profile.toJsonValue(),
+        deleteMode: _deleteMode.toJsonValue(),
+        allowUnknown: _allowUnknown,
+      );
+      const encoder = JsonEncoder.withIndent('  ');
+      await file.writeAsString('${encoder.convert(settings.toJson())}\n');
+    } on Exception {
+      // Keep settings persistence best-effort to avoid blocking UX.
+    }
+  }
+
+  Future<_DesktopSettings?> _loadDesktopSettings() async {
+    final file = File(_desktopSettingsFilePath());
+    if (!await file.exists()) {
+      return null;
+    }
+    try {
+      final text = await file.readAsString();
+      final decoded = jsonDecode(text);
+      if (decoded is! Map) {
+        return null;
+      }
+      final map = Map<String, Object?>.from(decoded.cast<String, Object?>());
+      return _DesktopSettings.fromJson(map);
+    } on Exception {
+      return null;
     }
   }
 
@@ -897,25 +1010,58 @@ List<String> _buildInitialRoots() {
   return <String>[home];
 }
 
+List<String> _buildOnboardingRootShortcuts(String? home) {
+  if (home == null || home.isEmpty) {
+    return const <String>[];
+  }
+  final shortcuts = <String>[
+    home,
+    _joinPath(home, 'Developer'),
+    _joinPath(home, 'dev'),
+    _joinPath(home, 'Projects'),
+    _joinPath(home, 'workspace'),
+  ];
+  final existing = <String>{};
+  for (final root in shortcuts) {
+    if (Directory(root).existsSync()) {
+      existing.add(Directory(root).absolute.path);
+    }
+  }
+  return existing.toList(growable: false);
+}
+
 String? _resolveHomePath() {
   final env = Platform.environment;
+  final candidates = <String>[];
 
-  final home = env['HOME']?.trim();
-  if (home != null && home.isNotEmpty) {
-    return home;
+  void addCandidate(String? value) {
+    final normalized = value?.trim();
+    if (normalized == null || normalized.isEmpty) return;
+    candidates.add(normalized);
   }
 
-  final userProfile = env['USERPROFILE']?.trim();
-  if (userProfile != null && userProfile.isNotEmpty) {
-    return userProfile;
+  if (Platform.isWindows) {
+    addCandidate(env['USERPROFILE']);
+    addCandidate(env['HOME']);
+  } else {
+    addCandidate(env['HOME']);
+    addCandidate(env['USERPROFILE']);
   }
 
   final drive = env['HOMEDRIVE']?.trim();
   final path = env['HOMEPATH']?.trim();
   if (drive != null && drive.isNotEmpty && path != null && path.isNotEmpty) {
-    return '$drive$path';
+    addCandidate('$drive$path');
   }
 
+  for (final candidate in candidates) {
+    if (Directory(candidate).existsSync()) {
+      return candidate;
+    }
+  }
+  if (candidates.isNotEmpty) {
+    return candidates.first;
+  }
   return null;
 }
 
@@ -945,4 +1091,99 @@ String _joinPath(String base, String child) {
     return '$base$child';
   }
   return '$base$separator$child';
+}
+
+String _desktopSettingsFilePath() {
+  final logsDir = defaultRunLogDir();
+  final rootDir = Directory(logsDir).parent.path;
+  return _joinPath(rootDir, 'desktop_settings.json');
+}
+
+class _DesktopSettings {
+  const _DesktopSettings({
+    required this.onboardingCompleted,
+    required this.localeCode,
+    required this.roots,
+    required this.profile,
+    required this.deleteMode,
+    required this.allowUnknown,
+  });
+
+  final bool onboardingCompleted;
+  final String localeCode;
+  final List<String> roots;
+  final String profile;
+  final String deleteMode;
+  final bool allowUnknown;
+
+  Map<String, Object?> toJson() => {
+    'schemaVersion': 1,
+    'onboardingCompleted': onboardingCompleted,
+    'localeCode': localeCode,
+    'roots': roots,
+    'profile': profile,
+    'deleteMode': deleteMode,
+    'allowUnknown': allowUnknown,
+  };
+
+  Locale get locale => _localeFromCode(localeCode);
+  Profile get parsedProfile => _profileFromJson(profile);
+  DeleteMode get parsedDeleteMode => _deleteModeFromJson(deleteMode);
+
+  static _DesktopSettings? fromJson(Map<String, Object?> json) {
+    final localeCode = json['localeCode'];
+    final profile = json['profile'];
+    final deleteMode = json['deleteMode'];
+    final rootsRaw = json['roots'];
+
+    if (localeCode is! String ||
+        profile is! String ||
+        deleteMode is! String ||
+        rootsRaw is! List) {
+      return null;
+    }
+
+    final roots = rootsRaw
+        .whereType<String>()
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+    final onboardingRaw = json['onboardingCompleted'];
+    final onboardingCompleted = onboardingRaw is bool
+        ? onboardingRaw
+        : roots.isNotEmpty;
+
+    return _DesktopSettings(
+      onboardingCompleted: onboardingCompleted,
+      localeCode: localeCode.trim().isEmpty ? 'en' : localeCode.trim(),
+      roots: roots,
+      profile: profile,
+      deleteMode: deleteMode,
+      allowUnknown: json['allowUnknown'] == true,
+    );
+  }
+}
+
+Locale _localeFromCode(String value) {
+  final code = value.trim().toLowerCase();
+  if (code == 'ko') return const Locale('ko');
+  return const Locale('en');
+}
+
+Profile _profileFromJson(String value) {
+  for (final profile in Profile.values) {
+    if (profile.toJsonValue() == value) {
+      return profile;
+    }
+  }
+  return Profile.safe;
+}
+
+DeleteMode _deleteModeFromJson(String value) {
+  for (final mode in DeleteMode.values) {
+    if (mode.toJsonValue() == value) {
+      return mode;
+    }
+  }
+  return DeleteMode.trash;
 }

@@ -5,7 +5,9 @@ import '../models/risk.dart';
 import '../global/global_cache_paths.dart';
 import '../xcode/xcode_cache_paths.dart';
 
+/// Registry of all supported cleanup targets.
 class TargetRegistry {
+  /// Full static target catalog.
   static final List<CacheTarget> all = <CacheTarget>[
     // SAFE
     CacheTarget(
@@ -128,6 +130,7 @@ class TargetRegistry {
     ),
   ];
 
+  /// Project-scoped targets enabled for [profile].
   static Iterable<CacheTarget> projectTargetsFor(Profile profile) sync* {
     for (final t in all) {
       if (t.category != CacheCategory.project) continue;
@@ -136,6 +139,7 @@ class TargetRegistry {
     }
   }
 
+  /// Global targets enabled for [profile].
   static Iterable<CacheTarget> globalTargetsFor(Profile profile) sync* {
     for (final t in all) {
       if (t.category != CacheCategory.global) continue;
@@ -144,6 +148,7 @@ class TargetRegistry {
     }
   }
 
+  /// Xcode targets enabled for [profile].
   static Iterable<CacheTarget> xcodeTargetsFor(Profile profile) sync* {
     for (final t in all) {
       if (t.category != CacheCategory.xcode) continue;
@@ -152,6 +157,7 @@ class TargetRegistry {
     }
   }
 
+  /// Finds a target by its stable [id].
   static CacheTarget? byId(String id) {
     for (final t in all) {
       if (t.id == id) return t;

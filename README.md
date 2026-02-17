@@ -22,6 +22,11 @@ MIT (`LICENSE`)
 - Desktop: `cd apps/desktop && flutter run`
 - Promo web: `cd apps/promo_web && python3 -m http.server 8080`
 
+## 개발 문서
+
+- Core API 레퍼런스: `packages/core/doc/api-reference.md`
+- CLI 명령어 레퍼런스: `apps/cli/doc/commands.md`
+
 ## 배포
 
 - 데스크톱 아티팩트(macOS/Windows/Linux): GitHub Actions `Desktop Release`
@@ -41,7 +46,9 @@ Cloudflare 대시보드 Git 연동 방식으로 운영합니다. GitHub Secrets/
 
 ## pub.dev 공개 계획
 
-- 1차 공개 대상은 `fluttrim_core` 패키지입니다.
+- 공개 패키지
+  - `fluttrim_core`: 코어 로직 패키지
+  - `fluttrim_cli`: 전역 실행 커맨드 `fluttrim` 제공
 - 공개 절차/체크리스트: `docs/pubdev-publishing.md`
 
 ## 오픈소스 운영 문서

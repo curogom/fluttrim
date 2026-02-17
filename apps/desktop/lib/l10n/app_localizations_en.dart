@@ -420,4 +420,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageKorean => 'Korean';
+
+  @override
+  String get onboardingTitle => 'Welcome to Fluttrim';
+
+  @override
+  String get onboardingSubtitle =>
+      'Choose your language and default scan roots to get started.';
+
+  @override
+  String get onboardingLanguageTitle => 'Language';
+
+  @override
+  String get onboardingLanguageHint => 'You can change this later in Settings.';
+
+  @override
+  String get onboardingRootsTitle => 'Default scan roots';
+
+  @override
+  String get onboardingRootsHint =>
+      'Fluttrim scans these folders for Flutter projects.';
+
+  @override
+  String get onboardingUseHomeShortcut => 'Use home folder';
+
+  @override
+  String get onboardingQuickShortcuts => 'Quick shortcuts';
+
+  @override
+  String get onboardingAddRootLabel => 'Add root folder';
+
+  @override
+  String onboardingSelectedRoots(int count) {
+    return 'Selected roots ($count)';
+  }
+
+  @override
+  String get onboardingNoRootsSelected =>
+      'Select at least one folder to continue.';
+
+  @override
+  String get onboardingRootInvalid => 'Enter a valid folder path.';
+
+  @override
+  String get onboardingRootNotFound => 'The selected folder does not exist.';
+
+  @override
+  String get onboardingRootRequired => 'Add at least one existing root folder.';
+
+  @override
+  String get onboardingContinue => 'Continue';
 }

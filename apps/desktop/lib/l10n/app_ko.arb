@@ -161,5 +161,27 @@
   "allowUnknown": "Unknown 귀속 항목 정리 허용",
   "settingsLanguage": "언어",
   "languageEnglish": "영어",
-  "languageKorean": "한국어"
+  "languageKorean": "한국어",
+  "onboardingTitle": "Fluttrim 시작하기",
+  "onboardingSubtitle": "언어와 기본 스캔 루트를 먼저 설정하세요.",
+  "onboardingLanguageTitle": "언어",
+  "onboardingLanguageHint": "설정 화면에서 언제든 변경할 수 있습니다.",
+  "onboardingRootsTitle": "기본 스캔 루트",
+  "onboardingRootsHint": "Fluttrim은 선택한 폴더에서 Flutter 프로젝트를 탐색합니다.",
+  "onboardingUseHomeShortcut": "홈 폴더 사용",
+  "onboardingQuickShortcuts": "빠른 경로",
+  "onboardingAddRootLabel": "루트 폴더 추가",
+  "onboardingSelectedRoots": "선택된 루트 ({count})",
+  "@onboardingSelectedRoots": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingNoRootsSelected": "계속하려면 폴더를 하나 이상 선택하세요.",
+  "onboardingRootInvalid": "올바른 폴더 경로를 입력하세요.",
+  "onboardingRootNotFound": "선택한 폴더가 존재하지 않습니다.",
+  "onboardingRootRequired": "존재하는 루트 폴더를 하나 이상 추가하세요.",
+  "onboardingContinue": "계속"
 }

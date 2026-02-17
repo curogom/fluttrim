@@ -3,12 +3,17 @@ import 'dart:io';
 
 import '../models/fvm_result.dart';
 
+/// Integrates with the `fvm` executable for SDK inspection/removal.
 class FvmService {
+  /// Creates an FVM service.
+  ///
+  /// [commandRunner] can be injected for tests.
   FvmService({CommandRunner commandRunner = const SystemCommandRunner()})
     : _commandRunner = commandRunner;
 
   final CommandRunner _commandRunner;
 
+  /// Removes one FVM SDK version by name.
   Future<FvmRemovalResult> removeSdk(
     String sdkName, {
     bool force = false,
@@ -57,6 +62,7 @@ class FvmService {
     }
   }
 
+  /// Inspects installed SDKs and per-project FVM usage.
   Future<FvmResult> inspect({List<String> projectRoots = const []}) async {
     final executablePath = await _commandRunner.resolveExecutable('fvm');
     if (executablePath == null) {
@@ -95,7 +101,7 @@ class FvmService {
           dartSdkVersion: sdk.dartSdkVersion,
           usedByProjectRoots: usedBy,
         );
-      }).toList()..sort((a, b) => a.name.compareTo(b.name));
+      }).toList()..sort((a, b) => _compareSdkNameDesc(a.name, b.name));
 
       final normalizedUsages = usages.map((usage) {
         final pinned = usage.pinnedVersion;
@@ -192,45 +198,32 @@ class FvmService {
         '--compress',
       ], workingDirectory: projectRoot);
       if (result.exitCode != 0) {
-        out.add(
-          FvmProjectUsage(
-            projectRoot: projectRoot,
-            projectName: _basename(projectRoot),
-            hasConfig: false,
-            isFlutterProject: false,
-            pinnedVersion: null,
-            installedLocally: false,
-          ),
-        );
         continue;
       }
 
       final decoded = _decodeJsonObject(result.stdout);
       final projectRaw = decoded['project'];
       if (projectRaw is! Map) {
-        out.add(
-          FvmProjectUsage(
-            projectRoot: projectRoot,
-            projectName: _basename(projectRoot),
-            hasConfig: false,
-            isFlutterProject: false,
-            pinnedVersion: null,
-            installedLocally: false,
-          ),
-        );
         continue;
       }
 
       final projectMap = Map<String, Object?>.from(
         projectRaw.cast<String, Object?>(),
       );
+      final hasConfig = projectMap['hasConfig'] == true;
+      final isFlutter = projectMap['isFlutter'] == true;
+      final pinnedVersion = hasConfig ? _readPinnedVersion(projectMap) : null;
+      if (!isFlutter || !hasConfig || pinnedVersion == null) {
+        continue;
+      }
+
       out.add(
         FvmProjectUsage(
           projectRoot: projectRoot,
           projectName: _asString(projectMap['name']) ?? _basename(projectRoot),
-          hasConfig: projectMap['hasConfig'] == true,
-          isFlutterProject: projectMap['isFlutter'] == true,
-          pinnedVersion: _asString(projectMap['pinnedVersion']),
+          hasConfig: hasConfig,
+          isFlutterProject: isFlutter,
+          pinnedVersion: pinnedVersion,
           installedLocally: false,
         ),
       );
@@ -239,28 +232,37 @@ class FvmService {
   }
 }
 
+/// Exception thrown for unrecoverable FVM API parsing/execution failures.
 class FvmServiceException implements Exception {
+  /// Creates an FVM service exception with [message].
   FvmServiceException(this.message);
 
+  /// Error reason.
   final String message;
 
   @override
   String toString() => 'FvmServiceException: $message';
 }
 
+/// Process abstraction used by [FvmService].
 abstract class CommandRunner {
+  /// Creates a command runner.
   const CommandRunner();
 
+  /// Runs [executable] with [arguments].
   Future<ProcessResult> run(
     String executable,
     List<String> arguments, {
     String? workingDirectory,
   });
 
+  /// Resolves [executable] to an absolute path, when available.
   Future<String?> resolveExecutable(String executable);
 }
 
+/// Default [CommandRunner] backed by `Process.run`.
 class SystemCommandRunner extends CommandRunner {
+  /// Creates a system command runner.
   const SystemCommandRunner();
 
   @override
@@ -308,6 +310,66 @@ String? _asString(Object? value) {
     return value.trim();
   }
   return null;
+}
+
+String? _readPinnedVersion(Map<String, Object?> projectMap) {
+  final direct = _extractVersionName(projectMap['pinnedVersion']);
+  if (direct != null) {
+    return direct;
+  }
+
+  final configRaw = projectMap['config'];
+  if (configRaw is Map) {
+    final config = Map<String, Object?>.from(configRaw.cast<String, Object?>());
+    final fromConfig = _extractVersionName(config['flutter']);
+    if (fromConfig != null) {
+      return fromConfig;
+    }
+  }
+
+  return null;
+}
+
+String? _extractVersionName(Object? raw) {
+  if (raw is String && raw.trim().isNotEmpty) {
+    return raw.trim();
+  }
+  if (raw is! Map) {
+    return null;
+  }
+  final map = Map<String, Object?>.from(raw.cast<String, Object?>());
+  return _asString(map['name']) ??
+      _asString(map['version']) ??
+      _asString(map['flutter']);
+}
+
+int _compareSdkNameDesc(String left, String right) {
+  final leftParts = _parseSdkVersionParts(left);
+  final rightParts = _parseSdkVersionParts(right);
+  if (leftParts != null && rightParts != null) {
+    for (var i = 0; i < 3; i++) {
+      final delta = rightParts[i] - leftParts[i];
+      if (delta != 0) return delta;
+    }
+    return right.compareTo(left);
+  }
+  if (leftParts != null) return -1;
+  if (rightParts != null) return 1;
+  return right.compareTo(left);
+}
+
+List<int>? _parseSdkVersionParts(String value) {
+  final match = RegExp(
+    r'^(\d+)(?:\.(\d+))?(?:\.(\d+))?',
+  ).firstMatch(value.trim());
+  if (match == null) return null;
+  final major = int.tryParse(match.group(1) ?? '');
+  final minor = int.tryParse(match.group(2) ?? '0');
+  final patch = int.tryParse(match.group(3) ?? '0');
+  if (major == null || minor == null || patch == null) {
+    return null;
+  }
+  return <int>[major, minor, patch];
 }
 
 String _basename(String path) {

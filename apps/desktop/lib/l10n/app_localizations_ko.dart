@@ -414,4 +414,51 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get languageKorean => '한국어';
+
+  @override
+  String get onboardingTitle => 'Fluttrim 시작하기';
+
+  @override
+  String get onboardingSubtitle => '언어와 기본 스캔 루트를 먼저 설정하세요.';
+
+  @override
+  String get onboardingLanguageTitle => '언어';
+
+  @override
+  String get onboardingLanguageHint => '설정 화면에서 언제든 변경할 수 있습니다.';
+
+  @override
+  String get onboardingRootsTitle => '기본 스캔 루트';
+
+  @override
+  String get onboardingRootsHint => 'Fluttrim은 선택한 폴더에서 Flutter 프로젝트를 탐색합니다.';
+
+  @override
+  String get onboardingUseHomeShortcut => '홈 폴더 사용';
+
+  @override
+  String get onboardingQuickShortcuts => '빠른 경로';
+
+  @override
+  String get onboardingAddRootLabel => '루트 폴더 추가';
+
+  @override
+  String onboardingSelectedRoots(int count) {
+    return '선택된 루트 ($count)';
+  }
+
+  @override
+  String get onboardingNoRootsSelected => '계속하려면 폴더를 하나 이상 선택하세요.';
+
+  @override
+  String get onboardingRootInvalid => '올바른 폴더 경로를 입력하세요.';
+
+  @override
+  String get onboardingRootNotFound => '선택한 폴더가 존재하지 않습니다.';
+
+  @override
+  String get onboardingRootRequired => '존재하는 루트 폴더를 하나 이상 추가하세요.';
+
+  @override
+  String get onboardingContinue => '계속';
 }

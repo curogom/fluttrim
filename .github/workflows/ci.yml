@@ -74,6 +74,21 @@ jobs:
         working-directory: apps/cli
         run: dart analyze
 
+  cli-pub-dry-run:
+    needs:
+      - public-scope-guard
+      - cli
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: CLI publish dry-run
+        working-directory: apps/cli
+        run: dart pub publish --dry-run
+
   desktop-linux-build:
     needs: public-scope-guard
     runs-on: ubuntu-latest

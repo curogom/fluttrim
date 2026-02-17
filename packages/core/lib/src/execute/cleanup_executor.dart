@@ -14,12 +14,19 @@ import '../targets/target_registry.dart';
 import 'trash_service.dart';
 import '../xcode/xcode_cache_paths.dart';
 
+/// Executes validated cleanup plans with guardrails and progress streaming.
 class CleanupExecutor {
+  /// Creates a cleanup executor.
+  ///
+  /// [trashService] can be overridden for tests or custom platform handling.
   CleanupExecutor({TrashService trashService = const SystemTrashService()})
     : _trashService = trashService;
 
   final TrashService _trashService;
 
+  /// Executes [plan] and emits [CleanupEvent] progress updates.
+  ///
+  /// Unknown-attribution items are rejected unless [allowUnknown] is `true`.
   Stream<CleanupEvent> execute(
     CleanupPlan plan, {
     bool allowUnknown = false,

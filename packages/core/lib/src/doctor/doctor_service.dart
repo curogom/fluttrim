@@ -4,9 +4,12 @@ import '../global/global_cache_paths.dart';
 import '../models/doctor_result.dart';
 import '../xcode/xcode_cache_paths.dart';
 
+/// Collects OS/tool/cache-path diagnostics used by CLI and GUI doctor views.
 class DoctorService {
+  /// Creates a doctor service.
   const DoctorService();
 
+  /// Runs diagnostics and returns a structured [DoctorResult].
   Future<DoctorResult> run() async {
     final cachePaths = <CachePathStatus>[];
     final resolvedGlobals = resolveGlobalCachePaths();

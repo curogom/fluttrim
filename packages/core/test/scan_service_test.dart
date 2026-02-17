@@ -122,6 +122,174 @@ void main() {
       expect(done.projects.map((p) => p.name).toSet(), {'keepme'});
     });
 
+    test('skips Flutter projects under packages directories', () async {
+      final packagesDir = Directory(p.join(tempDir.path, 'packages'));
+      await packagesDir.create(recursive: true);
+      await _createFlutterProject(
+        packagesDir,
+        dirName: 'inside_packages',
+        pubspecName: 'inside_packages',
+        withMetadata: true,
+      );
+      await _createFlutterProject(
+        tempDir,
+        dirName: 'outside_packages',
+        pubspecName: 'outside_packages',
+        withMetadata: true,
+      );
+
+      final service = ScanService();
+      final events = await service
+          .scan(
+            ScanRequest(
+              roots: [tempDir.path],
+              profile: Profile.safe,
+              computeSizes: false,
+            ),
+          )
+          .toList();
+      final done = events.lastWhere((e) => e.isDone).result!;
+
+      expect(done.projects.map((p) => p.name).toSet(), {'outside_packages'});
+    });
+
+    test(
+      'skips direct roots that are under packages when no melos config',
+      () async {
+        final packagesDir = Directory(p.join(tempDir.path, 'packages'));
+        await packagesDir.create(recursive: true);
+        final insidePackages = await _createFlutterProject(
+          packagesDir,
+          dirName: 'direct_root_package',
+          pubspecName: 'direct_root_package',
+          withMetadata: true,
+        );
+
+        final service = ScanService();
+        final events = await service
+            .scan(
+              ScanRequest(
+                roots: [insidePackages.path],
+                profile: Profile.safe,
+                computeSizes: false,
+              ),
+            )
+            .toList();
+        final done = events.lastWhere((e) => e.isDone).result!;
+
+        expect(done.projects, isEmpty);
+      },
+    );
+
+    test(
+      'skips symlinked roots that resolve into packages when no melos config',
+      () async {
+        final packagesDir = Directory(p.join(tempDir.path, 'packages'));
+        await packagesDir.create(recursive: true);
+        final packageProject = await _createFlutterProject(
+          packagesDir,
+          dirName: 'symlink_target',
+          pubspecName: 'symlink_target',
+          withMetadata: true,
+        );
+
+        final aliasPath = p.join(tempDir.path, 'alias_project');
+        final alias = Link(aliasPath);
+        await alias.create(packageProject.path, recursive: true);
+
+        final service = ScanService();
+        final events = await service
+            .scan(
+              ScanRequest(
+                roots: [alias.path],
+                profile: Profile.safe,
+                computeSizes: false,
+              ),
+            )
+            .toList();
+        final done = events.lastWhere((e) => e.isDone).result!;
+
+        expect(done.projects, isEmpty);
+      },
+      skip: Platform.isWindows,
+    );
+
+    test(
+      'allows melos workspace packages while keeping other packages excluded',
+      () async {
+        final melosFile = File(p.join(tempDir.path, 'melos.yaml'));
+        await melosFile.writeAsString('''
+name: test_workspace
+packages:
+  - packages/internal_*
+''');
+
+        final packagesDir = Directory(p.join(tempDir.path, 'packages'));
+        await packagesDir.create(recursive: true);
+        await _createFlutterProject(
+          packagesDir,
+          dirName: 'internal_one',
+          pubspecName: 'internal_one',
+          withMetadata: true,
+        );
+        await _createFlutterProject(
+          packagesDir,
+          dirName: 'external_two',
+          pubspecName: 'external_two',
+          withMetadata: true,
+        );
+
+        final service = ScanService();
+        final events = await service
+            .scan(
+              ScanRequest(
+                roots: [tempDir.path],
+                profile: Profile.safe,
+                computeSizes: false,
+              ),
+            )
+            .toList();
+        final done = events.lastWhere((e) => e.isDone).result!;
+
+        expect(done.projects.map((p) => p.name).toSet(), {'internal_one'});
+      },
+    );
+
+    test(
+      'resolves melos workspace when root points directly to packages child',
+      () async {
+        final melosFile = File(p.join(tempDir.path, 'melos.yaml'));
+        await melosFile.writeAsString('''
+name: test_workspace
+packages:
+  - packages/**
+''');
+
+        final packagesDir = Directory(p.join(tempDir.path, 'packages'));
+        await packagesDir.create(recursive: true);
+        final workspacePackage = await _createFlutterProject(
+          packagesDir,
+          dirName: 'direct_allowed',
+          pubspecName: 'direct_allowed',
+          withMetadata: true,
+        );
+
+        final service = ScanService();
+        final events = await service
+            .scan(
+              ScanRequest(
+                roots: [workspacePackage.path],
+                profile: Profile.safe,
+                computeSizes: false,
+              ),
+            )
+            .toList();
+        final done = events.lastWhere((e) => e.isDone).result!;
+
+        expect(done.projects.map((p) => p.name).toSet(), {'direct_allowed'});
+      },
+    );
+
     test(
       'ignores unreadable directories without crashing scan',
       () async {

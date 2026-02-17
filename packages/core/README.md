@@ -5,6 +5,10 @@ Pure Dart core library for Fluttrim.
 `fluttrim_core` contains all shared business logic used by the Fluttrim CLI and desktop GUI:
 scan Flutter projects, build safe cleanup plans, and execute cleanup with guardrails.
 
+## API docs
+
+- API reference: `doc/api-reference.md`
+
 ## What this package does
 
 - Discover Flutter projects from scan roots.

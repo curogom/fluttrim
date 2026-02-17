@@ -2,10 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0;url=/docs/viewer.html?doc=open-source-maintenance" />
     <title>Redirecting...</title>
   </head>
   <body>
-    <script>window.location.replace('/docs/viewer.html?doc=open-source-maintenance');</script>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get("lang") || localStorage.getItem("fluttrim_docs_lang") || "en";
+      window.location.replace('/docs/viewer.html?doc=open-source-maintenance&lang=' + encodeURIComponent(lang));
+    </script>
   </body>
 </html>

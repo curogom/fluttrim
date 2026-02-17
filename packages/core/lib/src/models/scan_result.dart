@@ -3,7 +3,9 @@ import 'attribution_status.dart';
 import 'profile.dart';
 import 'risk.dart';
 
+/// Final scan output containing project/global/xcode target sizes.
 class ScanResult {
+  /// Creates a scan result.
   const ScanResult({
     required this.startedAt,
     required this.finishedAt,
@@ -14,14 +16,28 @@ class ScanResult {
     this.globalTargets = const [],
   });
 
+  /// UTC timestamp when scan started.
   final DateTime startedAt;
+
+  /// UTC timestamp when scan finished.
   final DateTime finishedAt;
+
+  /// Profile used by this scan.
   final Profile profile;
+
+  /// Whether the scan was cancelled before normal completion.
   final bool cancelled;
+
+  /// Project-level scan results.
   final List<ProjectScanResult> projects;
+
+  /// Xcode cache targets (macOS only when enabled).
   final List<TargetScanResult> xcodeTargets;
+
+  /// Global cache targets when enabled.
   final List<TargetScanResult> globalTargets;
 
+  /// Total bytes across project, xcode, and global targets.
   int get totalBytes {
     final projectBytes = projects.fold(
       0,
@@ -38,6 +54,7 @@ class ScanResult {
     return projectBytes + xcodeBytes + globalBytes;
   }
 
+  /// Category totals aggregated from all targets.
   Map<CacheCategory, int> get totalsByCategory {
     final totals = <CacheCategory, int>{
       for (final c in CacheCategory.values) c: 0,
@@ -58,6 +75,7 @@ class ScanResult {
     return totals;
   }
 
+  /// Serializes result payload as JSON.
   Map<String, Object?> toJson() => {
     'startedAt': startedAt.toIso8601String(),
     'finishedAt': finishedAt.toIso8601String(),
@@ -73,19 +91,28 @@ class ScanResult {
   };
 }
 
+/// Per-project scan result.
 class ProjectScanResult {
+  /// Creates a project scan result.
   const ProjectScanResult({
     required this.name,
     required this.rootPath,
     required this.targets,
   });
 
+  /// Project name from `pubspec.yaml` (fallback: directory name).
   final String name;
+
+  /// Absolute project root path.
   final String rootPath;
+
+  /// Target scan results for this project.
   final List<TargetScanResult> targets;
 
+  /// Sum of target sizes for this project.
   int get totalBytes => targets.fold(0, (prev, t) => prev + t.sizeBytes);
 
+  /// Serializes result payload as JSON.
   Map<String, Object?> toJson() => {
     'name': name,
     'rootPath': rootPath,
@@ -94,7 +121,9 @@ class ProjectScanResult {
   };
 }
 
+/// Scan result for one concrete cleanup target path.
 class TargetScanResult {
+  /// Creates a target scan result.
   const TargetScanResult({
     required this.targetId,
     required this.category,
@@ -109,21 +138,44 @@ class TargetScanResult {
     this.error,
   });
 
+  /// Target id from the static target registry.
   final String targetId;
+
+  /// Category copied from target definition.
   final CacheCategory category;
+
+  /// Risk level shown in UI/CLI.
   final Risk risk;
+
+  /// Absolute target path.
   final String path;
+
+  /// Whether path existed at scan time.
   final bool exists;
+
+  /// Estimated bytes reclaimable for the target.
   final int sizeBytes;
+
+  /// Attribution status for potentially shared caches.
   final AttributionStatus attributionStatus;
+
+  /// Attributed project root path, when available.
   final String? attributedProjectRootPath;
+
+  /// Attribution confidence in `0.0..1.0`, when available.
   final double? attributionConfidence;
+
+  /// Evidence path used during attribution analysis.
   final String? attributionEvidencePath;
+
+  /// Optional non-fatal scan error for this target.
   final String? error;
 
+  /// Returns `true` when attribution is unknown.
   bool get hasUnknownAttribution =>
       attributionStatus == AttributionStatus.unknown;
 
+  /// Serializes result payload as JSON.
   Map<String, Object?> toJson() => {
     'targetId': targetId,
     'category': category.toJsonValue(),

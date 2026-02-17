@@ -2,10 +2,21 @@
 
 `fluttrim_core`를 호출하는 얇은 CLI 래퍼입니다.
 
+상세 명령어 레퍼런스: `doc/commands.md`
+
 ## 사용법
+
+로컬 실행:
 
 ```bash
 dart run bin/fluttrim.dart --help
+```
+
+pub.dev 설치(전역):
+
+```bash
+dart pub global activate fluttrim_cli
+fluttrim --help
 ```
 
 명령어:

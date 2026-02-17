@@ -1,18 +1,19 @@
 name: fluttrim_cli
 description: Thin CLI wrapper around fluttrim_core.
-version: 0.0.1
-# Not intended for publishing to pub.dev (monorepo app).
-publish_to: 'none'
-# repository: https://github.com/my_org/my_repo
+version: 1.0.2
+repository: https://github.com/curogom/fluttrim
+homepage: https://fluttrim.curogom.dev
+issue_tracker: https://github.com/curogom/fluttrim/issues
+documentation: https://github.com/curogom/fluttrim/blob/main/apps/cli/doc/commands.md
+executables:
+  fluttrim: fluttrim
 
 environment:
   sdk: ^3.10.0
 
-# Add regular dependencies here.
 dependencies:
   args: ^2.7.0
-  fluttrim_core:
-    path: ../../packages/core
+  fluttrim_core: ">=1.0.1 <2.0.0"
 
 dev_dependencies:
   lints: ^6.0.0

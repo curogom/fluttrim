@@ -2,18 +2,31 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+/// Target id for Dart/Flutter global pub cache.
 const String globalPubCacheTargetId = 'global.pub_cache';
+
+/// Target id for Gradle user-home cache.
 const String globalGradleUserHomeTargetId = 'global.gradle_user_home';
+
+/// Target id for CocoaPods cache directory.
 const String globalCocoaPodsCacheTargetId = 'global.cocoapods_cache';
+
+/// Target id for CocoaPods home directory.
 const String globalCocoaPodsHomeTargetId = 'global.cocoapods_home';
 
+/// Resolved absolute path for one global cache target id.
 class GlobalCachePath {
+  /// Creates a global cache path entry.
   const GlobalCachePath({required this.targetId, required this.path});
 
+  /// Stable target identifier.
   final String targetId;
+
+  /// Absolute filesystem path for the target.
   final String path;
 }
 
+/// Resolves OS-specific global cache paths.
 List<GlobalCachePath> resolveGlobalCachePaths({
   Map<String, String>? environment,
   String? operatingSystem,
@@ -58,6 +71,7 @@ List<GlobalCachePath> resolveGlobalCachePaths({
   return paths;
 }
 
+/// Resolves a single global cache path by [targetId].
 String? resolveGlobalCachePathByTargetId(
   String targetId, {
   Map<String, String>? environment,

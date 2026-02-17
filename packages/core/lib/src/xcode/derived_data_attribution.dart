@@ -4,7 +4,9 @@ import 'package:path/path.dart' as p;
 
 import '../models/attribution_status.dart';
 
+/// Attribution result for one Xcode DerivedData directory.
 class DerivedDataAttribution {
+  /// Creates an attribution result.
   const DerivedDataAttribution({
     required this.status,
     required this.projectRootPath,
@@ -12,29 +14,40 @@ class DerivedDataAttribution {
     required this.evidencePath,
   });
 
+  /// Creates a `none` attribution result.
   const DerivedDataAttribution.none()
     : status = AttributionStatus.none,
       projectRootPath = null,
       confidence = null,
       evidencePath = null;
 
+  /// Creates an `unknown` attribution result.
   const DerivedDataAttribution.unknown({this.evidencePath})
     : status = AttributionStatus.unknown,
       projectRootPath = null,
       confidence = null;
 
+  /// Creates an `attributed` result.
   const DerivedDataAttribution.attributed({
     required this.projectRootPath,
     required this.confidence,
     this.evidencePath,
   }) : status = AttributionStatus.attributed;
 
+  /// Attribution state.
   final AttributionStatus status;
+
+  /// Attributed project root path, when found.
   final String? projectRootPath;
+
+  /// Attribution confidence in `0.0..1.0`, when available.
   final double? confidence;
+
+  /// Source evidence path from plist metadata.
   final String? evidencePath;
 }
 
+/// Attempts to attribute one DerivedData subdirectory to a Flutter project.
 Future<DerivedDataAttribution> attributeDerivedDataDirectory(
   Directory derivedDataDirectory,
 ) async {

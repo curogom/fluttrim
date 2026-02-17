@@ -6,7 +6,7 @@ import 'package:args/args.dart';
 import 'package:fluttrim_core/fluttrim_core.dart';
 
 const toolName = 'fluttrim';
-const toolVersion = '0.1.0';
+const toolVersion = '1.0.2';
 
 Future<void> runCli(List<String> arguments) async {
   exitCode = await _run(arguments);
@@ -268,7 +268,20 @@ Future<int> _runApplyCommand(ArgResults cmd) async {
   );
 
   if (plan.items.isEmpty) {
-    stdout.writeln('Nothing to clean for selected profile/roots.');
+    if (jsonMode) {
+      final now = DateTime.now().toUtc();
+      final noOpResult = CleanupResult(
+        startedAt: now,
+        finishedAt: now,
+        profile: plan.profile,
+        deleteMode: plan.deleteMode,
+        allowUnknown: allowUnknown,
+        items: const <CleanupItemResult>[],
+      );
+      _writeJson(noOpResult.toJson());
+    } else {
+      stdout.writeln('Nothing to clean for selected profile/roots.');
+    }
     return 0;
   }
 

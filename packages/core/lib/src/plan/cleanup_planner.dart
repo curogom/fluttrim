@@ -6,9 +6,15 @@ import '../models/delete_mode.dart';
 import '../models/scan_result.dart';
 import '../targets/target_registry.dart';
 
+/// Converts [ScanResult] into a validated, executable [CleanupPlan].
 class CleanupPlanner {
+  /// Creates a cleanup planner.
   const CleanupPlanner();
 
+  /// Builds a cleanup plan from [scan].
+  ///
+  /// Throws [InvalidPlanException] when target ids are unknown or when a
+  /// project target escapes its project root containment rules.
   CleanupPlan createPlan({
     required ScanResult scan,
     DeleteMode deleteMode = DeleteMode.trash,
@@ -150,9 +156,12 @@ class CleanupPlanner {
   }
 }
 
+/// Error thrown when a cleanup plan cannot be validated safely.
 class InvalidPlanException implements Exception {
+  /// Creates an invalid-plan exception with [message].
   InvalidPlanException(this.message);
 
+  /// Error reason.
   final String message;
 
   @override

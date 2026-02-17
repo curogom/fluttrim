@@ -1,8 +1,11 @@
 import 'scan_result.dart';
 
+/// Progress phase for a scan stream.
 enum ScanPhase { discovering, sizing, done }
 
+/// Streaming event emitted by [ScanService.scan].
 class ScanEvent {
+  /// Internal constructor used by named factories.
   const ScanEvent._({
     required this.phase,
     this.message,
@@ -13,6 +16,7 @@ class ScanEvent {
     this.result,
   });
 
+  /// Emits a project discovery event.
   factory ScanEvent.discovering({
     String? message,
     String? currentPath,
@@ -28,6 +32,7 @@ class ScanEvent {
     );
   }
 
+  /// Emits a sizing event while scanning targets.
   factory ScanEvent.sizing({
     String? message,
     String? currentProjectRoot,
@@ -45,20 +50,36 @@ class ScanEvent {
     );
   }
 
+  /// Emits a completion event with final [result].
   factory ScanEvent.done(ScanResult result) {
     return ScanEvent._(phase: ScanPhase.done, result: result);
   }
 
+  /// Current scan phase.
   final ScanPhase phase;
+
+  /// Optional human-readable progress message.
   final String? message;
+
+  /// Path currently being processed.
   final String? currentPath;
+
+  /// Current project root path during sizing.
   final String? currentProjectRoot;
+
+  /// 1-based completed step count when known.
   final int? progressDone;
+
+  /// Total step count when known.
   final int? progressTotal;
+
+  /// Final scan result when [phase] is [ScanPhase.done].
   final ScanResult? result;
 
+  /// Returns `true` when this event carries final result data.
   bool get isDone => phase == ScanPhase.done && result != null;
 
+  /// Serializes event payload as JSON.
   Map<String, Object?> toJson() => {
     'phase': phase.name,
     'message': message,

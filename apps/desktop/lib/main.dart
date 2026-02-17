@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fluttrim_core/fluttrim_core.dart';
@@ -31,6 +32,7 @@ class _FluttrimAppState extends State<FluttrimApp> {
   void initState() {
     super.initState();
     _controller = AppController();
+    unawaited(_controller.initialize());
   }
 
   @override
@@ -47,6 +49,7 @@ class _FluttrimAppState extends State<FluttrimApp> {
         return MaterialApp(
           locale: _controller.locale,
           onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+          debugShowCheckedModeBanner: false,
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -55,9 +58,388 @@ class _FluttrimAppState extends State<FluttrimApp> {
           ],
           supportedLocales: const [Locale('en'), Locale('ko')],
           theme: _buildFluttrimTheme(),
-          home: HomeShell(controller: _controller),
+          home: _controller.isInitialized
+              ? (_controller.needsOnboarding
+                    ? OnboardingPage(controller: _controller)
+                    : HomeShell(controller: _controller))
+              : const _BootstrappingPage(),
         );
       },
+    );
+  }
+}
+
+class _BootstrappingPage extends StatelessWidget {
+  const _BootstrappingPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(strokeWidth: 2.8),
+        ),
+      ),
+    );
+  }
+}
+
+class OnboardingPage extends StatefulWidget {
+  const OnboardingPage({super.key, required this.controller});
+
+  final AppController controller;
+
+  @override
+  State<OnboardingPage> createState() => _OnboardingPageState();
+}
+
+class _OnboardingPageState extends State<OnboardingPage> {
+  final TextEditingController _rootController = TextEditingController();
+  late Locale _selectedLocale;
+  late final Set<String> _selectedRoots;
+  String? _validationError;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedLocale = widget.controller.locale;
+    _selectedRoots = widget.controller.roots
+        .where((root) => root.trim().isNotEmpty)
+        .toSet();
+    final home = widget.controller.homeRootPath;
+    if (_selectedRoots.isEmpty && home != null && home.isNotEmpty) {
+      _selectedRoots.add(home);
+    }
+  }
+
+  @override
+  void dispose() {
+    _rootController.dispose();
+    super.dispose();
+  }
+
+  void _setLocale(Locale locale) {
+    if (_selectedLocale == locale) return;
+    setState(() {
+      _selectedLocale = locale;
+      _validationError = null;
+    });
+    widget.controller.setLocale(locale);
+  }
+
+  void _toggleShortcut(String path, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedRoots.add(path);
+      } else {
+        _selectedRoots.remove(path);
+      }
+      _validationError = null;
+    });
+  }
+
+  void _addManualRoot(AppLocalizations l10n) {
+    final normalized = widget.controller.normalizeRootPath(
+      _rootController.text,
+    );
+    if (normalized == null || normalized.isEmpty) {
+      setState(() {
+        _validationError = l10n.onboardingRootInvalid;
+      });
+      return;
+    }
+    if (!Directory(normalized).existsSync()) {
+      setState(() {
+        _validationError = l10n.onboardingRootNotFound;
+      });
+      return;
+    }
+    setState(() {
+      _selectedRoots.add(normalized);
+      _validationError = null;
+      _rootController.clear();
+    });
+  }
+
+  Future<void> _completeOnboarding(AppLocalizations l10n) async {
+    if (_isSaving) return;
+    if (_selectedRoots.isEmpty) {
+      setState(() {
+        _validationError = l10n.onboardingRootRequired;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+      _validationError = null;
+    });
+
+    final completed = await widget.controller.completeOnboarding(
+      locale: _selectedLocale,
+      roots: _selectedRoots.toList(growable: false),
+    );
+    if (!mounted) return;
+
+    if (!completed) {
+      setState(() {
+        _validationError = l10n.onboardingRootRequired;
+        _isSaving = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSaving = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final home = widget.controller.homeRootPath;
+    final shortcuts = widget.controller.onboardingRootShortcuts;
+    final selectedRoots = _selectedRoots.toList()..sort();
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            Color(0xFF050A14),
+            Color(0xFF0A1630),
+            Color(0xFF081D2C),
+          ],
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 860),
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.onboardingTitle,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            l10n.onboardingSubtitle,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.onboardingLanguageTitle,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.onboardingLanguageHint,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            ChoiceChip(
+                              label: Text(l10n.languageEnglish),
+                              selected: _selectedLocale.languageCode == 'en',
+                              onSelected: (_) => _setLocale(const Locale('en')),
+                            ),
+                            ChoiceChip(
+                              label: Text(l10n.languageKorean),
+                              selected: _selectedLocale.languageCode == 'ko',
+                              onSelected: (_) => _setLocale(const Locale('ko')),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.onboardingRootsTitle,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.onboardingRootsHint,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        if (home != null && home.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _selectedRoots.add(home);
+                                _validationError = null;
+                              });
+                            },
+                            icon: const Icon(Icons.home_outlined),
+                            label: Text(l10n.onboardingUseHomeShortcut),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            home,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                        if (shortcuts.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            l10n.onboardingQuickShortcuts,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: shortcuts
+                                .map(
+                                  (path) => FilterChip(
+                                    label: Text(
+                                      path,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    selected: _selectedRoots.contains(path),
+                                    onSelected: (value) =>
+                                        _toggleShortcut(path, value),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _rootController,
+                                onSubmitted: (_) => _addManualRoot(l10n),
+                                decoration: InputDecoration(
+                                  labelText: l10n.onboardingAddRootLabel,
+                                  hintText: l10n.rootPathHint,
+                                  border: const OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            FilledButton(
+                              onPressed: () => _addManualRoot(l10n),
+                              child: Text(l10n.add),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.onboardingSelectedRoots(selectedRoots.length),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        if (selectedRoots.isEmpty)
+                          Text(
+                            l10n.onboardingNoRootsSelected,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          )
+                        else
+                          ...selectedRoots.map(
+                            (path) => ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                path,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: IconButton(
+                                tooltip: l10n.clearSelection,
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedRoots.remove(path);
+                                  });
+                                },
+                                icon: const Icon(Icons.close),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_validationError != null) ...[
+                  const SizedBox(height: 12),
+                  _ErrorBanner(
+                    message: _validationError!,
+                    onDismiss: () => setState(() => _validationError = null),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: _isSaving
+                        ? null
+                        : () => _completeOnboarding(l10n),
+                    icon: _isSaving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.arrow_forward),
+                    label: Text(l10n.onboardingContinue),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -269,6 +651,9 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final scan = controller.scanResult;
+    final reclaimableProjectCount = controller.projects
+        .where((project) => project.totalBytes > 0)
+        .length;
     final progress = _progressValue(
       controller.progressDone,
       controller.progressTotal,
@@ -318,7 +703,7 @@ class DashboardPage extends StatelessWidget {
               ),
               _MetricCard(
                 label: l10n.projectsCount,
-                value: '${controller.projects.length}',
+                value: '$reclaimableProjectCount',
               ),
               _MetricCard(
                 label: l10n.profileLabel,
@@ -388,15 +773,27 @@ class _ProjectsPageState extends State<ProjectsPage> {
     final controller = widget.controller;
     final l10n = AppLocalizations.of(context)!;
     final search = _searchController.text.trim().toLowerCase();
+    final reclaimableProjects = controller.projects
+        .where((project) => project.totalBytes > 0)
+        .toList(growable: false);
+    final reclaimableProjectRoots = reclaimableProjects
+        .map((project) => project.rootPath)
+        .toSet();
 
-    final filtered = controller.projects.where((project) {
+    final filtered = reclaimableProjects.where((project) {
       if (search.isEmpty) return true;
       return project.name.toLowerCase().contains(search) ||
           project.rootPath.toLowerCase().contains(search);
     }).toList()..sort((a, b) => b.totalBytes.compareTo(a.totalBytes));
 
-    final selectedProject = controller.selectedProject;
-    final selectedProjectRoots = controller.selectedProjectRoots;
+    final selectedProject = switch (controller.selectedProject) {
+      final project? when reclaimableProjectRoots.contains(project.rootPath) =>
+        project,
+      _ => null,
+    };
+    final selectedProjectRoots = controller.selectedProjectRoots
+        .where(reclaimableProjectRoots.contains)
+        .toSet();
     final selectedTargetIds = controller.selectedTargetIdsForSelectedProject();
 
     return Scaffold(
@@ -502,7 +899,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
               child: filtered.isEmpty
                   ? Center(
                       child: Text(
-                        controller.projects.isEmpty
+                        reclaimableProjects.isEmpty &&
+                                controller.projects.isEmpty
                             ? l10n.scanToDiscoverProjects
                             : l10n.noMatchingProjects,
                       ),
@@ -1136,7 +1534,11 @@ class FvmPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   if (result == null || result.projectUsages.isEmpty)
-                    Text(l10n.scanToLoadProjectUsage)
+                    Text(
+                      result == null
+                          ? l10n.scanToLoadProjectUsage
+                          : l10n.noData,
+                    )
                   else
                     _SimpleTable(
                       columns: <String>[

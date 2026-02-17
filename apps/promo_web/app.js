@@ -7,6 +7,9 @@ const translations = {
     cta_download: "Get Early Access",
     cta_features: "Explore Features",
     metric_reclaimable: "Total Reclaimable",
+    hero_screen_label: "Actual desktop capture (current build)",
+    hero_screen_note:
+      "Dashboard tab after launch. Same UI shipped in desktop release binaries.",
     features_title: "Built for Flutter developer workflows",
     feature_scan_title: "Smart scan profiles",
     feature_scan_body:
@@ -20,6 +23,36 @@ const translations = {
     feature_fvm_title: "FVM visibility",
     feature_fvm_body:
       "See installed SDK usage by project and clean unused SDKs with confirmation.",
+    screens_title: "Actual GUI captures",
+    screens_body: "Real screenshots from the current desktop build, not mock illustrations.",
+    screen_onboarding_caption:
+      "Onboarding: language selection and initial scan root configuration.",
+    screen_dashboard_caption: "Dashboard: reclaimable totals, scan status, and recent run logs.",
+    gui_title: "Understand the GUI in one pass",
+    gui_body:
+      "Follow the typical flow from onboarding to safe apply before your first cleanup.",
+    gui_step_1_title: "Onboarding",
+    gui_step_1_body:
+      "Choose language and set scan roots with a home-folder shortcut.",
+    gui_step_2_title: "Scan",
+    gui_step_2_body:
+      "Run SAFE profile first and review reclaimable totals and permission warnings.",
+    gui_step_3_title: "Preview plan",
+    gui_step_3_body:
+      "Batch-select projects, inspect explicit targets, and verify risk labels.",
+    gui_step_4_title: "Apply and verify",
+    gui_step_4_body:
+      "Apply cleanup with Trash-first mode, then confirm reclaimed bytes in history.",
+    gui_cta: "Open full GUI guide",
+    cli_title: "CLI quick start for automation",
+    cli_body:
+      "Install the global fluttrim command from pub.dev and run the same cleanup flow in shell scripts or CI jobs.",
+    cli_install_title: "Install and verify",
+    cli_flow_title: "Typical safe flow",
+    cli_button_pubdev: "View CLI on pub.dev",
+    cli_button_docs: "Open CLI docs",
+    cli_note:
+      "CLI and GUI share one core engine, so safety rules and JSON schema stay aligned.",
     trust_title: "Safety is product behavior, not a disclaimer",
     trust_1: "Allowlist + containment guards prevent out-of-scope deletions.",
     trust_2: "Unknown attribution is blocked by default unless explicitly enabled.",
@@ -57,7 +90,7 @@ const translations = {
     download_body:
       "Get the latest macOS, Windows, and Ubuntu binaries from GitHub Releases.",
     download_button: "Open Downloads",
-    download_button_pubdev: "View on pub.dev",
+    download_button_pubdev: "View Core on pub.dev",
     download_button_github: "View on GitHub",
     waitlist_disabled_note:
       "Waitlist email collection is disabled for now. TODO: re-enable only after privacy policy and secure storage are in place.",
@@ -72,6 +105,8 @@ const translations = {
     cta_download: "얼리 액세스 신청",
     cta_features: "기능 보기",
     metric_reclaimable: "회수 가능 총량",
+    hero_screen_label: "실제 데스크톱 실행 화면 (현재 빌드)",
+    hero_screen_note: "앱 실행 직후 Dashboard 탭 화면입니다. 실제 배포 바이너리와 동일한 UI입니다.",
     features_title: "Flutter 개발 흐름에 맞춘 기능",
     feature_scan_title: "프로파일 기반 스캔",
     feature_scan_body:
@@ -85,6 +120,33 @@ const translations = {
     feature_fvm_title: "FVM 가시성",
     feature_fvm_body:
       "프로젝트별 SDK 사용 현황을 확인하고 미사용 SDK를 확인 후 정리할 수 있습니다.",
+    screens_title: "실제 GUI 화면",
+    screens_body: "목업이 아닌 현재 데스크톱 빌드에서 캡처한 실제 화면입니다.",
+    screen_onboarding_caption: "온보딩: 언어 선택 및 초기 스캔 루트 설정",
+    screen_dashboard_caption: "대시보드: 회수 가능 용량, 스캔 상태, 최근 로그",
+    gui_title: "GUI 흐름을 한 번에 이해하기",
+    gui_body: "첫 실행 온보딩부터 안전한 Apply까지 핵심 단계를 빠르게 따라갈 수 있습니다.",
+    gui_step_1_title: "온보딩",
+    gui_step_1_body: "언어를 선택하고 홈 폴더 바로가기로 스캔 루트를 설정합니다.",
+    gui_step_2_title: "스캔",
+    gui_step_2_body:
+      "먼저 SAFE 프로파일로 실행하고 회수 가능 용량과 권한 경고를 확인합니다.",
+    gui_step_3_title: "플랜 미리보기",
+    gui_step_3_body:
+      "프로젝트를 다중 선택한 뒤 경로별 대상과 위험 라벨을 검토합니다.",
+    gui_step_4_title: "적용 및 확인",
+    gui_step_4_body:
+      "휴지통 우선 모드로 적용하고 History에서 회수 결과를 확인합니다.",
+    gui_cta: "GUI 가이드 문서 열기",
+    cli_title: "자동화를 위한 CLI 빠른 시작",
+    cli_body:
+      "pub.dev에서 전역 fluttrim 커맨드를 설치하고 셸 스크립트/CI에서 동일한 정리 흐름을 실행할 수 있습니다.",
+    cli_install_title: "설치 및 확인",
+    cli_flow_title: "일반적인 안전 실행 흐름",
+    cli_button_pubdev: "CLI pub.dev 보기",
+    cli_button_docs: "CLI 문서 열기",
+    cli_note:
+      "CLI와 GUI는 하나의 코어 엔진을 공유하므로 안전 규칙과 JSON 스키마가 동일하게 유지됩니다.",
     trust_title: "안전은 문구가 아니라 제품 동작입니다",
     trust_1: "Allowlist + containment 가드로 범위 밖 삭제를 차단합니다.",
     trust_2: "Unknown 귀속 항목은 기본적으로 삭제가 차단됩니다.",
@@ -119,7 +181,7 @@ const translations = {
     download_title: "데스크톱 빌드 다운로드",
     download_body: "GitHub Releases에서 macOS, Windows, Ubuntu 빌드를 받을 수 있습니다.",
     download_button: "다운로드 열기",
-    download_button_pubdev: "pub.dev 보기",
+    download_button_pubdev: "Core pub.dev 보기",
     download_button_github: "GitHub 보기",
     waitlist_disabled_note:
       "대기자 이메일 수집은 현재 비활성화 상태입니다. TODO: 개인정보 처리방침 및 안전한 저장소 준비 후 재개합니다.",
@@ -127,6 +189,24 @@ const translations = {
     footer_owner_label: "만든 사람",
   },
 };
+
+function withDocsLanguage(url, language) {
+  if (!url || !url.startsWith("/docs/")) {
+    return url;
+  }
+
+  const parsed = new URL(url, window.location.origin);
+  parsed.searchParams.set("lang", language);
+  return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+}
+
+function syncDocsLinks(language) {
+  document.querySelectorAll("[data-doc-link]").forEach((link) => {
+    const baseHref = link.dataset.baseHref || link.getAttribute("href");
+    link.dataset.baseHref = baseHref;
+    link.setAttribute("href", withDocsLanguage(baseHref, language));
+  });
+}
 
 function setLanguage(language) {
   const pack = translations[language] || translations.en;
@@ -145,6 +225,8 @@ function setLanguage(language) {
   });
 
   localStorage.setItem("fluttrim_promo_lang", language);
+  localStorage.setItem("fluttrim_docs_lang", language);
+  syncDocsLinks(language);
 }
 
 document.querySelectorAll("[data-lang-btn]").forEach((button) => {

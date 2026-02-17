@@ -94,7 +94,7 @@ packages:
       path: "../../packages/core"
       relative: true
     source: path
-    version: "1.0.1"
+    version: "1.0.2"
   glob:
     dependency: transitive
     description:

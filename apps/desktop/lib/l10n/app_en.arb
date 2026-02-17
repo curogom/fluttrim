@@ -161,5 +161,27 @@
   "allowUnknown": "Allow unknown attribution cleanup",
   "settingsLanguage": "Language",
   "languageEnglish": "English",
-  "languageKorean": "Korean"
+  "languageKorean": "Korean",
+  "onboardingTitle": "Welcome to Fluttrim",
+  "onboardingSubtitle": "Choose your language and default scan roots to get started.",
+  "onboardingLanguageTitle": "Language",
+  "onboardingLanguageHint": "You can change this later in Settings.",
+  "onboardingRootsTitle": "Default scan roots",
+  "onboardingRootsHint": "Fluttrim scans these folders for Flutter projects.",
+  "onboardingUseHomeShortcut": "Use home folder",
+  "onboardingQuickShortcuts": "Quick shortcuts",
+  "onboardingAddRootLabel": "Add root folder",
+  "onboardingSelectedRoots": "Selected roots ({count})",
+  "@onboardingSelectedRoots": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingNoRootsSelected": "Select at least one folder to continue.",
+  "onboardingRootInvalid": "Enter a valid folder path.",
+  "onboardingRootNotFound": "The selected folder does not exist.",
+  "onboardingRootRequired": "Add at least one existing root folder.",
+  "onboardingContinue": "Continue"
 }

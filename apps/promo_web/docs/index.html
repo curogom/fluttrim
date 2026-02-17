@@ -18,48 +18,77 @@
     <header class="topbar container">
       <div class="brand">
         <img src="../assets/logo-cropped.png" alt="Fluttrim logo" class="brand-mark" />
-        <span>Fluttrim Docs</span>
+        <span id="brand-title">Fluttrim Docs</span>
       </div>
       <nav class="nav-links">
-        <a href="/">Home</a>
-        <a href="/docs/" class="active">Docs</a>
-        <a href="https://pub.dev/packages/fluttrim_core" target="_blank" rel="noopener noreferrer"
+        <a id="nav-home" href="/">Home</a>
+        <a id="nav-docs" href="/docs/" class="active">Docs</a>
+        <a id="nav-pubdev" href="https://pub.dev/packages/fluttrim_core" target="_blank" rel="noopener noreferrer"
           >pub.dev</a
         >
-        <a href="https://github.com/curogom/fluttrim" target="_blank" rel="noopener noreferrer"
+        <a id="nav-github" href="https://github.com/curogom/fluttrim" target="_blank" rel="noopener noreferrer"
           >GitHub</a
         >
       </nav>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button data-lang-btn="en" class="is-active">EN</button>
+        <button data-lang-btn="ko">KO</button>
+      </div>
     </header>
 
     <main class="container">
       <section class="hero">
-        <h1>Documentation Paths are now hosted under <code>/docs</code>.</h1>
-        <p>
-          프로젝트/운영 문서를 사이트 경로로 직접 제공합니다. 각 문서는 GitHub 원문(Source) 링크도 함께
-          제공합니다.
+        <h1 id="hero-title">Documentation is available under /docs paths.</h1>
+        <p id="hero-body">
+          Browse product and operations docs directly in the site. English and Korean are both available.
         </p>
       </section>
 
       <section>
-        <h2>Core Docs</h2>
+        <h2 id="core-heading">Core Docs</h2>
         <div id="core-docs" class="grid"></div>
       </section>
 
       <section>
-        <h2>Operations Docs</h2>
+        <h2 id="ops-heading">Operations Docs</h2>
         <div id="ops-docs" class="grid"></div>
       </section>
 
-      <p class="notice">
-        Note: 문서 원본은 저장소 파일이며, 웹 문서는 배포 시점 사본입니다.
-      </p>
+      <p id="docs-notice" class="notice">Note: Web docs are deployment-time copies of repository sources.</p>
     </main>
 
     <script src="./docs.js"></script>
     <script>
-      window.FluttrimDocs.renderDocCards(document.getElementById("core-docs"), "core");
-      window.FluttrimDocs.renderDocCards(document.getElementById("ops-docs"), "ops");
+      function setLanguage(language) {
+        const lang = window.FluttrimDocs.setPreferredLanguage(language);
+        const i18n = window.FluttrimDocs.getI18n(lang);
+
+        document.getElementById("brand-title").textContent = i18n.docsTitle;
+        document.getElementById("nav-home").textContent = i18n.home;
+        document.getElementById("nav-docs").textContent = i18n.docs;
+        document.getElementById("nav-pubdev").textContent = i18n.pubdev;
+        document.getElementById("nav-github").textContent = i18n.github;
+        document.getElementById("hero-title").textContent = i18n.heroTitle;
+        document.getElementById("hero-body").textContent = i18n.heroBody;
+        document.getElementById("core-heading").textContent = i18n.coreHeading;
+        document.getElementById("ops-heading").textContent = i18n.opsHeading;
+        document.getElementById("docs-notice").textContent = i18n.notice;
+
+        document.querySelectorAll("[data-lang-btn]").forEach((button) => {
+          button.classList.toggle("is-active", button.getAttribute("data-lang-btn") === lang);
+        });
+
+        window.FluttrimDocs.renderDocCards(document.getElementById("core-docs"), "core", lang);
+        window.FluttrimDocs.renderDocCards(document.getElementById("ops-docs"), "ops", lang);
+      }
+
+      document.querySelectorAll("[data-lang-btn]").forEach((button) => {
+        button.addEventListener("click", () => {
+          setLanguage(button.getAttribute("data-lang-btn"));
+        });
+      });
+
+      setLanguage(window.FluttrimDocs.getPreferredLanguage());
     </script>
   </body>
 </html>
