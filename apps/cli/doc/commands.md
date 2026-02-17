@@ -1,35 +1,35 @@
 # fluttrim CLI Command Reference
 
-이 문서는 `fluttrim_cli` 명령어 사용법을 정리합니다.
+This document describes command usage for `fluttrim_cli`.
 
-## 실행 방식
+## Run Modes
 
-- 로컬(레포 내): `dart run bin/fluttrim.dart <command> [options]`
-- 전역(pub.dev 설치 후): `fluttrim <command> [options]`
+- Local (inside repository): `dart run bin/fluttrim.dart <command> [options]`
+- Global (after pub.dev activation): `fluttrim <command> [options]`
 
-## 전역 공통 옵션
+## Global Options
 
-- `-h, --help`: 도움말 출력
-- `--version`: CLI 버전 출력
+- `-h, --help`: show help
+- `--version`: print CLI version
 
 ## `scan`
 
-Flutter 프로젝트를 탐지하고 캐시/아티팩트 용량을 계산합니다.
+Discover Flutter projects and estimate cache/artifact sizes.
 
 ```bash
 fluttrim scan [options]
 ```
 
-주요 옵션:
+Options:
 
-- `-r, --root <path>`: 스캔 루트(반복 가능)
-- `--profile <safe|medium|aggressive>`: 스캔 프로파일 (기본: `safe`)
-- `--exclude <pattern>`: 제외 패턴(반복 가능)
-- `--max-depth <n>`: 루트 기준 탐색 깊이 (기본: `5`)
-- `--include-global`: 글로벌 캐시 포함 여부 (기본: `false`)
-- `--json`: JSON 출력
+- `-r, --root <path>`: scan root (repeatable)
+- `--profile <safe|medium|aggressive>`: cleanup profile (default: `safe`)
+- `--exclude <pattern>`: exclusion pattern (repeatable)
+- `--max-depth <n>`: discovery depth from each root (default: `5`)
+- `--include-global`: include global caches (default: `false`)
+- `--json`: output JSON
 
-예시:
+Examples:
 
 ```bash
 fluttrim scan --root ~/dev --profile safe
@@ -38,20 +38,20 @@ fluttrim scan --root ~/dev --include-global --json
 
 ## `plan`
 
-삭제 없이 정리 계획만 생성합니다.
+Generate cleanup plan only (no deletion).
 
 ```bash
 fluttrim plan [options]
 ```
 
-`scan` 옵션 + 추가 옵션:
+`scan` options plus:
 
-- `--trash`: 삭제 모드를 휴지통으로 설정 (기본)
-- `--permanent`: 삭제 모드를 영구 삭제로 설정
-- `--allow-unknown`: 귀속 불명(unknown attribution) 대상 포함
-- `--json`: JSON 출력
+- `--trash`: set delete mode to trash (default)
+- `--permanent`: set delete mode to permanent
+- `--allow-unknown`: include unknown-attribution targets
+- `--json`: output JSON
 
-예시:
+Examples:
 
 ```bash
 fluttrim plan --root ~/dev --profile medium
@@ -60,31 +60,31 @@ fluttrim plan --root ~/dev --profile safe --json
 
 ## `apply`
 
-정리 계획을 실행합니다.
+Execute cleanup plan.
 
 ```bash
 fluttrim apply [options]
 ```
 
-주요 옵션:
+Options:
 
-- `-r, --root <path>`: 스캔 루트(반복 가능)
-- `--profile <safe|medium|aggressive>`: 프로파일 (기본: `safe`)
-- `--exclude <pattern>`: 제외 패턴(반복 가능)
-- `--max-depth <n>`: 탐색 깊이 (기본: `5`)
-- `--include-global`: 글로벌 캐시 포함 여부
-- `-y, --yes`: 확인 프롬프트 생략
-- `--trash`: 휴지통 모드 (기본)
-- `--permanent`: 영구 삭제 모드 (`--yes` 필수)
-- `--allow-unknown`: 귀속 불명 대상 허용
-- `--json`: JSON 출력
+- `-r, --root <path>`: scan root (repeatable)
+- `--profile <safe|medium|aggressive>`: profile (default: `safe`)
+- `--exclude <pattern>`: exclusion pattern (repeatable)
+- `--max-depth <n>`: discovery depth (default: `5`)
+- `--include-global`: include global caches
+- `-y, --yes`: skip confirmation prompt
+- `--trash`: trash mode (default)
+- `--permanent`: permanent mode (`--yes` required)
+- `--allow-unknown`: allow unknown-attribution targets
+- `--json`: output JSON
 
-주의:
+Notes:
 
-- `--permanent`는 `--yes` 없이 실행할 수 없습니다.
-- 기본값은 안전한 동작을 위해 `--trash` + unknown 차단입니다.
+- `--permanent` cannot be used without `--yes`.
+- Safe defaults are `--trash` and unknown-attribution blocking.
 
-예시:
+Examples:
 
 ```bash
 fluttrim apply --root ~/dev --profile safe --yes
@@ -94,26 +94,26 @@ fluttrim apply --root ~/dev --profile safe --json --yes
 
 ## `doctor`
 
-OS, 도구 설치 상태, 캐시 경로 존재 여부를 출력합니다.
+Print OS, tool availability, and cache path diagnostics.
 
 ```bash
 fluttrim doctor [options]
 ```
 
-옵션:
+Options:
 
-- `--json`: JSON 출력
+- `--json`: output JSON
 
-예시:
+Examples:
 
 ```bash
 fluttrim doctor
 fluttrim doctor --json
 ```
 
-## 종료 코드
+## Exit Codes
 
-- `0`: 성공
-- `1`: 실행 중 예외/실패
-- `64`: 잘못된 인자/형식 오류
-- `130`: 사용자 취소(SIGINT 등)
+- `0`: success
+- `1`: runtime exception/failure
+- `64`: invalid arguments/format error
+- `130`: user cancellation (e.g. SIGINT)

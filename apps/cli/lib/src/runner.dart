@@ -6,7 +6,7 @@ import 'package:args/args.dart';
 import 'package:fluttrim_core/fluttrim_core.dart';
 
 const toolName = 'fluttrim';
-const toolVersion = '1.0.2';
+const toolVersion = '1.0.3';
 
 Future<void> runCli(List<String> arguments) async {
   exitCode = await _run(arguments);
