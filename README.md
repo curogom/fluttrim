@@ -35,6 +35,10 @@ Cloudflare 대시보드 Git 연동 방식으로 운영합니다. GitHub Secrets/
 
 상세 가이드: `docs/cloudflare-pages-setup.md`
 
+## 공개 준비 체크
+
+- 서비스 공개 체크업: `docs/service-readiness-checklist.md`
+
 ## pub.dev 공개 계획
 
 - 1차 공개 대상은 `fluttrim_core` 패키지입니다.

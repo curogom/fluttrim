@@ -17,3 +17,4 @@ python3 -m http.server 8080
 - 순수 정적 HTML/CSS/JS (프레임워크 의존성 없음)
 - Cloudflare Pages 등 정적 호스팅에 바로 배포 가능
 - 랜딩 내 `Open source operations kit` 섹션에서 핵심 운영 문서로 바로 연결
+- 로고 원본: `assets/logo.png` (원본), 서비스 적용본: `assets/logo-cropped.png`
