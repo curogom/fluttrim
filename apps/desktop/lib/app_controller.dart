@@ -774,24 +774,10 @@ List<String> _buildInitialRoots() {
   if (home == null || home.isEmpty) {
     return const <String>[];
   }
-
-  final candidates = <String>[
-    _joinPath(home, 'Developer'),
-    _joinPath(home, 'dev'),
-    _joinPath(home, 'Dev'),
-    _joinPath(home, 'Projects'),
-    _joinPath(home, 'workspace'),
-    _joinPath(home, 'Work'),
-  ];
-
-  final existing = <String>[];
-  for (final candidate in candidates) {
-    if (Directory(candidate).existsSync()) {
-      existing.add(candidate);
-    }
+  if (!Directory(home).existsSync()) {
+    return const <String>[];
   }
-
-  return existing;
+  return <String>[home];
 }
 
 String? _resolveHomePath() {
