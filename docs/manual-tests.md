@@ -25,6 +25,9 @@ OS별 동작 검증을 위한 스모크/수동 시나리오입니다.
 2. 프로젝트 목록이 채워지고 검색/정렬 가능한지 확인
 3. 프로젝트 상세에서 대상 선택 -> `Preview Plan` -> `Apply`
 4. 적용 시 확인 모달과 결과/로그 갱신 확인
+5. 릴리즈 앱(Finder/Explorer 실행)에서 기본 스캔 루트 확인:
+   - 앱 번들 경로가 아닌 사용자 홈 기반 루트(`~/Developer`, `~/dev`, `~/Projects` 등)로 초기화되는지
+   - 필요 시 `Settings -> Scan Roots`에서 추가/삭제 후 즉시 반영되는지
 
 ## Xcode DerivedData (macOS)
 
