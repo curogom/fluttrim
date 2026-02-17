@@ -296,14 +296,24 @@
       </section>
 
       <section id="download" class="container cta-panel">
-        <h2 data-i18n="download_title">Join the early desktop preview</h2>
+        <h2 data-i18n="download_title">Download desktop builds</h2>
         <p data-i18n="download_body">
-          Tell us your OS + team size and we will prioritize your onboarding slot.
+          Get the latest macOS, Windows, and Ubuntu binaries from GitHub Releases.
         </p>
-        <form class="lead-form" onsubmit="event.preventDefault(); window.alert('Thanks! We will contact you soon.');">
-          <input type="email" placeholder="team@company.com" required />
-          <button type="submit" data-i18n="download_button">Request Invite</button>
-        </form>
+        <div class="download-actions">
+          <a
+            class="btn btn-primary"
+            href="https://github.com/curogom/fluttrim/releases/latest"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-i18n="download_button"
+            >Open Downloads</a
+          >
+        </div>
+        <p class="download-note" data-i18n="waitlist_disabled_note">
+          Waitlist email collection is disabled for now. TODO: re-enable only after privacy policy and
+          secure storage are in place.
+        </p>
       </section>
     </main>
 

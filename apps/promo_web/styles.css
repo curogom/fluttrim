@@ -340,33 +340,18 @@ h2 {
   margin: 6px 0;
 }
 
-.lead-form {
+.download-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin-top: 14px;
   flex-wrap: wrap;
 }
 
-.lead-form input,
-.lead-form button {
-  border-radius: 10px;
-  border: 1px solid rgba(135, 168, 198, 0.35);
-  background: rgba(7, 14, 27, 0.8);
-  color: var(--text-0);
-  padding: 10px 12px;
-  font: inherit;
-}
-
-.lead-form input {
-  min-width: 250px;
-  flex: 1;
-}
-
-.lead-form button {
-  background: linear-gradient(135deg, var(--secondary), var(--primary));
-  color: #062338;
-  font-weight: 700;
-  cursor: pointer;
+.download-note {
+  margin: 12px 0 0;
+  color: #9fbad7;
+  font-size: 0.92rem;
+  line-height: 1.55;
 }
 
 .footer {

@@ -2,33 +2,52 @@ name: Desktop Release
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: true
+        type: string
   push:
     tags:
       - 'v*'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  resolve-release-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.resolve.outputs.release_tag }}
+    steps:
+      - id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+          echo "release_tag=$tag" >> "$GITHUB_OUTPUT"
+
   build-desktop:
+    needs: resolve-release-tag
     name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_TAG: ${{ needs.resolve-release-tag.outputs.release_tag }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             target: linux
-            artifact_name: fluttrim-linux
-            artifact_path: apps/desktop/build/linux/x64/release/bundle
+            package_base: fluttrim-linux
           - os: windows-latest
             target: windows
-            artifact_name: fluttrim-windows
-            artifact_path: apps/desktop/build/windows/x64/runner/Release
+            package_base: fluttrim-windows
           - os: macos-latest
             target: macos
-            artifact_name: fluttrim-macos
-            artifact_path: apps/desktop/build/macos/Build/Products/Release
+            package_base: fluttrim-macos
 
     steps:
       - uses: actions/checkout@v4
@@ -52,9 +71,59 @@ jobs:
         working-directory: apps/desktop
         run: flutter build ${{ matrix.target }} --release
 
-      - name: Upload artifact
+      - name: Package Linux bundle
+        if: matrix.target == 'linux'
+        run: |
+          pkg="$RUNNER_TEMP/${{ matrix.package_base }}-${RELEASE_TAG}.tar.gz"
+          tar -C apps/desktop/build/linux/x64/release -czf "$pkg" bundle
+          echo "PACKAGED_FILE=$pkg" >> "$GITHUB_ENV"
+
+      - name: Package macOS bundle
+        if: matrix.target == 'macos'
+        run: |
+          pkg="$RUNNER_TEMP/${{ matrix.package_base }}-${RELEASE_TAG}.zip"
+          ditto -c -k --sequesterRsrc --keepParent \
+            apps/desktop/build/macos/Build/Products/Release/fluttrim_desktop.app \
+            "$pkg"
+          echo "PACKAGED_FILE=$pkg" >> "$GITHUB_ENV"
+
+      - name: Package Windows bundle
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          $pkg = "$env:RUNNER_TEMP\\${{ matrix.package_base }}-$env:RELEASE_TAG.zip"
+          Compress-Archive -Path "apps/desktop/build/windows/x64/runner/Release/*" -DestinationPath $pkg -Force
+          "PACKAGED_FILE=$pkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Upload release package
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_path }}
+          name: release-${{ matrix.target }}
+          path: ${{ env.PACKAGED_FILE }}
           if-no-files-found: error
+
+  publish-release:
+    needs:
+      - resolve-release-tag
+      - build-desktop
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_TAG: ${{ needs.resolve-release-tag.outputs.release_tag }}
+    steps:
+      - name: Download packaged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create or update GitHub release
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" dist/* --clobber
+          else
+            gh release create "$RELEASE_TAG" dist/* \
+              --title "$RELEASE_TAG" \
+              --notes "Desktop binaries for Fluttrim."
+          fi
