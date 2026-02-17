@@ -2,7 +2,7 @@ name: fluttrim_core
 description: Pure Dart business logic for fluttrim (scan/plan/apply with safety rules).
 version: 1.0.0
 repository: https://github.com/curogom/fluttrim
-homepage: https://fluttrim.pages.dev
+homepage: https://fluttrim.curogom.dev
 issue_tracker: https://github.com/curogom/fluttrim/issues
 topics:
   - flutter

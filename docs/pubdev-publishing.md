@@ -20,6 +20,7 @@
 1. 버전/체인지로그 갱신
    - `packages/core/pubspec.yaml`
    - `packages/core/CHANGELOG.md`
+   - 메타데이터 확인: `homepage=https://fluttrim.curogom.dev`
 2. 정적 검증
    - `cd packages/core`
    - `dart format --output=none --set-exit-if-changed .`
