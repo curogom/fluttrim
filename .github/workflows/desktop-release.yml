@@ -76,6 +76,7 @@ jobs:
         env:
           MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
           MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
         run: |
           if [ -z "$MACOS_CERT_P12_BASE64" ] || [ -z "$MACOS_CERT_PASSWORD" ]; then
             echo "Missing macOS signing secrets: MACOS_CERT_P12_BASE64 / MACOS_CERT_PASSWORD"
@@ -103,15 +104,36 @@ jobs:
             -k "$KEYCHAIN_PASSWORD" \
             "$KEYCHAIN_PATH"
 
+          echo "Available code signing identities in imported keychain:"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH" || true
+
+          RESOLVED_SIGNING_IDENTITY=""
+          if [ -n "${MACOS_CODESIGN_IDENTITY:-}" ]; then
+            if echo "$MACOS_CODESIGN_IDENTITY" | grep -Eq '^[A-F0-9]{40}$'; then
+              RESOLVED_SIGNING_IDENTITY="$MACOS_CODESIGN_IDENTITY"
+            else
+              RESOLVED_SIGNING_IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | awk -v target="$MACOS_CODESIGN_IDENTITY" 'index($0, target) {print $2; exit}')"
+            fi
+          fi
+
+          if [ -z "$RESOLVED_SIGNING_IDENTITY" ]; then
+            RESOLVED_SIGNING_IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | awk '/Developer ID Application/ {print $2; exit}')"
+          fi
+
+          if [ -z "$RESOLVED_SIGNING_IDENTITY" ]; then
+            echo "No Developer ID Application identity found in imported certificate."
+            echo "Ensure MACOS_CERT_P12_BASE64 contains a Developer ID Application certificate with private key."
+            exit 1
+          fi
+
           echo "SIGNING_KEYCHAIN=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+          echo "SIGNING_IDENTITY=$RESOLVED_SIGNING_IDENTITY" >> "$GITHUB_ENV"
 
       - name: Sign macOS app bundle
         if: matrix.target == 'macos'
-        env:
-          MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
         run: |
-          if [ -z "$MACOS_CODESIGN_IDENTITY" ]; then
-            echo "Missing macOS signing secret: MACOS_CODESIGN_IDENTITY"
+          if [ -z "${SIGNING_IDENTITY:-}" ]; then
+            echo "Missing resolved signing identity."
             exit 1
           fi
 
@@ -119,10 +141,11 @@ jobs:
           ENTITLEMENTS_PATH="apps/desktop/macos/Runner/Release.entitlements"
 
           xattr -cr "$APP_PATH"
+          echo "Using signing identity hash: $SIGNING_IDENTITY"
           codesign --force --deep --options runtime --timestamp \
             --entitlements "$ENTITLEMENTS_PATH" \
             --keychain "$SIGNING_KEYCHAIN" \
-            --sign "$MACOS_CODESIGN_IDENTITY" \
+            --sign "$SIGNING_IDENTITY" \
             "$APP_PATH"
 
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
