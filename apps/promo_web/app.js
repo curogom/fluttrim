@@ -57,6 +57,8 @@ const translations = {
     download_body:
       "Get the latest macOS, Windows, and Ubuntu binaries from GitHub Releases.",
     download_button: "Open Downloads",
+    download_button_pubdev: "View on pub.dev",
+    download_button_github: "View on GitHub",
     waitlist_disabled_note:
       "Waitlist email collection is disabled for now. TODO: re-enable only after privacy policy and secure storage are in place.",
     footer_tagline: "Flutter-focused cache inspector and space trimmer.",
@@ -117,6 +119,8 @@ const translations = {
     download_title: "데스크톱 빌드 다운로드",
     download_body: "GitHub Releases에서 macOS, Windows, Ubuntu 빌드를 받을 수 있습니다.",
     download_button: "다운로드 열기",
+    download_button_pubdev: "pub.dev 보기",
+    download_button_github: "GitHub 보기",
     waitlist_disabled_note:
       "대기자 이메일 수집은 현재 비활성화 상태입니다. TODO: 개인정보 처리방침 및 안전한 저장소 준비 후 재개합니다.",
     footer_tagline: "Flutter 전용 캐시 인스펙터 및 공간 정리 도구",
