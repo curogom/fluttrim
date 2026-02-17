@@ -179,6 +179,10 @@ class _HomeShellState extends State<HomeShell> {
                     onDestinationSelected: (idx) =>
                         setState(() => _selectedIndex = idx),
                     labelType: NavigationRailLabelType.all,
+                    leading: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
+                      child: _RailBrand(title: l10n.appTitle),
+                    ),
                     destinations: pages
                         .map(
                           (page) => NavigationRailDestination(
@@ -194,6 +198,62 @@ class _HomeShellState extends State<HomeShell> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RailBrand extends StatelessWidget {
+  const _RailBrand({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 140),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: _brandNavy.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _brandPrimary.withValues(alpha: 0.35)),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: _brandPrimary.withValues(alpha: 0.2),
+              blurRadius: 16,
+              spreadRadius: -6,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/logo.png',
+                  width: 26,
+                  height: 26,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
